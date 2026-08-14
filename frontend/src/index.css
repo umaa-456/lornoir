@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+html.dark {
+  color-scheme: dark;
+  /* Dark theme (default): obsidian = deep navy background, ivory = white text */
+  --c-obsidian: 8 15 28;
+  --c-obsidian-light: 15 25 43;
+  --c-obsidian-lighter: 23 37 61;
+  --c-ivory: 255 255 255;
+  --c-ivory-dim: 203 212 227;
+}
+
+html.light {
+  color-scheme: light;
+  /* Light theme: same token NAMES, inverted VALUES — obsidian becomes the
+     white background, ivory becomes the navy text. Every existing
+     bg-obsidian / text-ivory usage across the app then just works. */
+  --c-obsidian: 255 255 255;
+  --c-obsidian-light: 240 243 248;
+  --c-obsidian-lighter: 226 231 240;
+  --c-ivory: 8 15 28;
+  --c-ivory-dim: 46 58 79;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-obsidian text-ivory font-body antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #B84E12, #F2701A);
+  border-radius: 4px;
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: #F2701A;
+  color: #080F1C;
+}
+
+/* ---------- Focus visibility (accessibility floor) ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 1px solid #F2701A;
+  outline-offset: 3px;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Typography helpers ---------- */
+.eyebrow {
+  @apply font-body text-[11px] tracking-widest2 uppercase text-gold/80;
+}
+
+.heading-display {
+  @apply font-display font-light;
+}
+
+/* ---------- Glass surface ---------- */
+.glass {
+  background: rgba(21, 19, 15, 0.55);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(242, 112, 26, 0.16);
+}
+
+html.light .glass {
+  background: rgba(246, 241, 231, 0.6);
+  border: 1px solid rgba(140, 109, 47, 0.18);
+}
+
+/* ---------- Gold gradient text ---------- */
+.text-gold-sheen {
+  background: linear-gradient(115deg, #B84E12 0%, #FFD9B0 30%, #F2701A 50%, #FFE8CC 65%, #B84E12 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4.5s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* ---------- Hairline divider ---------- */
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(242, 112, 26, 0.5), transparent);
+}
+
+/* ---------- Custom cursor (desktop only, see CustomCursor.jsx) ---------- */
+@media (pointer: fine) {
+  .cursor-none-desktop {
+    cursor: none;
+  }
+}
+
+/* ---------- Swiper gold theme ---------- */
+.flash-sale-swiper .swiper-button-next,
+.flash-sale-swiper .swiper-button-prev,
+.reviews-swiper .swiper-button-next,
+.reviews-swiper .swiper-button-prev {
+  color: #F2701A;
+  width: 36px;
+  height: 36px;
+  background: rgba(21, 19, 15, 0.6);
+  border: 1px solid rgba(242, 112, 26, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+}
+.flash-sale-swiper .swiper-button-next::after,
+.flash-sale-swiper .swiper-button-prev::after,
+.reviews-swiper .swiper-button-next::after,
+.reviews-swiper .swiper-button-prev::after {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Static content page prose ---------- */
+.prose-content h2 {
+  @apply font-display text-2xl mt-10 mb-4 text-gold-pale;
+}
+.prose-content h2:first-child {
+  @apply mt-0;
+}
+.prose-content h3 {
+  @apply font-body text-sm tracking-widest2 uppercase text-gold/80 mt-8 mb-3;
+}
+.prose-content p {
+  @apply text-ivory/70 leading-relaxed mb-4;
+}
+.prose-content ul {
+  @apply list-disc list-outside pl-5 space-y-2 text-ivory/70 mb-4;
+}
+.prose-content a {
+  @apply text-gold hover:underline;
+}
+.prose-content strong {
+  @apply text-ivory font-semibold;
+}
+
+/* ---------- Skeleton shimmer ---------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(242, 112, 26, 0.08);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(242, 112, 26, 0.15), transparent);
+  animation: skeletonSweep 1.6s infinite;
+}
+@keyframes skeletonSweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
