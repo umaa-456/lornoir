@@ -139,7 +139,7 @@ export default function Hero() {
               data-cursor-hover
               className="hero-cta text-xs tracking-widest2 uppercase text-ivory/80 border-b border-gold/40 pb-1 hover:text-gold hover:border-gold transition-colors"
             >
-              Explore L'Art de l'Oud
+              Explore Your products
             </Link>
           </div>
         </div>

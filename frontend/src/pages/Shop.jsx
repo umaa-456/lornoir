@@ -101,7 +101,7 @@ export default function Shop() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search fragrances…"
+            placeholder="Search your required product…"
             className="w-full bg-transparent border border-gold/25 pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-gold placeholder:text-ivory/40"
           />
         </div>
