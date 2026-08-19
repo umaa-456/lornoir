@@ -12,7 +12,7 @@ export default function Addresses() {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
 
-  const load = () => api.get('/addresses').then(({ data }) => setAddresses(data.addresses)).catch(() => toast.error('Could not load addresses'));
+  const load = () => api.get('/addresses').then(({ data }) => setAddresses(Array.isArray(data?.addresses) ? data.addresses : [])).catch(() => toast.error('Could not load addresses'));
   useEffect(() => { load(); }, []);
 
   const submit = async (e) => {

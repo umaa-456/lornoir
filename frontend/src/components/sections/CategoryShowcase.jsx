@@ -11,7 +11,9 @@ export default function CategoryShowcase() {
     categoriesApi.list().then(setCategories).catch(() => setCategories([]));
   }, []);
 
-  if (categories !== null && categories.length === 0) return null;
+  const categoryList = Array.isArray(categories) ? categories : [];
+
+  if (categories !== null && categoryList.length === 0) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-10 py-8">
@@ -21,7 +23,7 @@ export default function CategoryShowcase() {
       </Reveal>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {(categories || Array.from({ length: 4 })).slice(0, 4).map((cat, i) =>
+        {(categories === null ? Array.from({ length: 4 }) : categoryList).slice(0, 4).map((cat, i) =>
           cat ? (
             <Reveal key={cat.slug} delay={i * 0.08}>
               <Link

@@ -62,7 +62,13 @@ export default function Shop() {
           setProducts(data.products);
           setPagination(data.pagination);
         })
-        .catch(() => toast.error('Could not load products'));
+        .catch(() => {
+          // End the loading state after a failed request while retaining a
+          // complete pagination shape for all result and pager rendering.
+          setProducts([]);
+          setPagination({ page: 1, limit: 12, total: 0, totalPages: 1 });
+          toast.error('Could not load products');
+        });
     }, 300);
     return () => clearTimeout(timeout);
   }, [search, filters, sort, page]);

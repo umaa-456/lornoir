@@ -12,7 +12,7 @@ export default function Orders() {
   useEffect(() => {
     api
       .get('/orders/mine')
-      .then(({ data }) => setOrders(data.orders))
+      .then(({ data }) => setOrders(Array.isArray(data?.orders) ? data.orders : []))
       .catch(() => toast.error('Could not load your orders'));
   }, []);
 

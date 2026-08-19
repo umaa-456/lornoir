@@ -11,12 +11,14 @@ export default function Testimonials() {
   const [reviews, setReviews] = useState(null);
 
   useEffect(() => {
-    reviewsApi.featured().then(setReviews).catch(() => setReviews([]));
+    reviewsApi.featured().then((data) => setReviews(Array.isArray(data) ? data : [])).catch(() => setReviews([]));
   }, []);
 
   // No reviews across the catalogue yet — skip the section rather than
   // showing an empty carousel.
-  if (reviews !== null && reviews.length === 0) return null;
+  const reviewList = Array.isArray(reviews) ? reviews : [];
+
+  if (reviews !== null && reviewList.length === 0) return null;
 
   return (
     <section className="max-w-5xl mx-auto px-6 md:px-10 py-24 text-center">
@@ -34,7 +36,7 @@ export default function Testimonials() {
           slidesPerView={1}
           className="reviews-swiper"
         >
-          {reviews?.map((review) => (
+          {reviewList.map((review) => (
             <SwiperSlide key={review._id}>
               <div className="flex flex-col items-center px-6 md:px-16">
                 <div className="flex gap-1 text-gold mb-6">

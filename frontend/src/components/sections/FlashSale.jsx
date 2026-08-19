@@ -32,13 +32,15 @@ export default function FlashSale() {
   useEffect(() => {
     productsApi
       .list({ tag: 'flash-sale', limit: 12 })
-      .then((data) => setSaleProducts(data.products))
+      .then((data) => setSaleProducts(Array.isArray(data?.products) ? data.products : []))
       .catch(() => setSaleProducts([]));
   }, []);
 
   // Nothing tagged for a flash sale right now — skip the section entirely
   // rather than showing an empty countdown with no products under it.
-  if (saleProducts !== null && saleProducts.length === 0) return null;
+  const products = Array.isArray(saleProducts) ? saleProducts : [];
+
+  if (saleProducts !== null && products.length === 0) return null;
 
   return (
     <section className="luxury-dark relative py-24 border-y border-gold/20 overflow-hidden">
@@ -75,7 +77,7 @@ export default function FlashSale() {
             breakpoints={{ 768: { slidesPerView: 3 }, 1024: { slidesPerView: 4 } }}
             className="!pb-2 flash-sale-swiper"
           >
-            {saleProducts?.map((product) => (
+            {products.map((product) => (
               <SwiperSlide key={product._id}>
                 <ProductCard product={product} />
               </SwiperSlide>

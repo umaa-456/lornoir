@@ -11,7 +11,7 @@ export default function Notifications() {
   const load = () =>
     api
       .get('/notifications')
-      .then(({ data }) => setNotifications(data.notifications))
+      .then(({ data }) => setNotifications(Array.isArray(data?.notifications) ? data.notifications : []))
       .catch(() => toast.error('Could not load notifications'));
 
   useEffect(() => { load(); }, []);
