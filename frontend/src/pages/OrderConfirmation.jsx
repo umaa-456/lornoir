@@ -1,16 +1,19 @@
 import { useLocation, Navigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { HiCheckCircle } from 'react-icons/hi';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function OrderConfirmation() {
   const { state } = useLocation();
   const order = state?.order;
+  const { settings } = useSiteSettings();
 
   if (!order) return <Navigate to="/" replace />;
 
   return (
     <div className="pt-40 pb-24 max-w-2xl mx-auto px-6 text-center">
-      <Helmet><title>Order Confirmed — L'Or Noir</title></Helmet>
+      <Helmet><title>Order Confirmed — {settings.siteName}</title></Helmet>
 
       <HiCheckCircle className="text-gold text-6xl mx-auto mb-6" />
       <p className="eyebrow mb-3">Thank You</p>
@@ -26,13 +29,13 @@ export default function OrderConfirmation() {
           {order.items.map((item) => (
             <div key={item.sku} className="flex justify-between text-sm text-ivory/70">
               <span>{item.name} ({item.variantLabel}) × {item.qty}</span>
-              <span>${(item.price * item.qty).toFixed(2)}</span>
+              <span>{formatCurrency(item.price * item.qty, settings.currency)}</span>
             </div>
           ))}
         </div>
         <div className="border-t border-gold/10 pt-4 flex justify-between font-semibold">
           <span>Total</span>
-          <span className="text-gold">${order.total.toFixed(2)}</span>
+          <span className="text-gold">{formatCurrency(order.total, settings.currency)}</span>
         </div>
       </div>
 

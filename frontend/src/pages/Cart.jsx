@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
@@ -6,6 +6,8 @@ import { HiOutlineTrash, HiOutlineTicket } from 'react-icons/hi';
 import Reveal from '@/components/ui/Reveal';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function Cart() {
   const {
@@ -19,11 +21,19 @@ export default function Cart() {
     removeFromCart,
     applyCoupon,
     removeCoupon,
+    revalidateCart,
   } = useCart();
   const { isAuthenticated } = useAuth();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
   const [applying, setApplying] = useState(false);
+
+  useEffect(() => {
+    revalidateCart().then((unavailable) => {
+      if (unavailable.length) toast.error('Some items are no longer available. Please review your bag.');
+    });
+  }, []);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -51,7 +61,7 @@ export default function Cart() {
 
   return (
     <div className="pt-32 pb-24 max-w-5xl mx-auto px-6 md:px-10">
-      <Helmet><title>Your Bag — L'Or Noir</title></Helmet>
+      <Helmet><title>Your Bag — {settings.siteName}</title></Helmet>
 
       <Reveal className="mb-12">
         <p className="eyebrow mb-3">Your Selection</p>
@@ -109,7 +119,7 @@ export default function Cart() {
                         +
                       </button>
                     </div>
-                    <p className="font-body">${(item.price * item.qty).toFixed(2)}</p>
+                    <p className="font-body">{formatCurrency(item.price * item.qty, settings.currency)}</p>
                   </div>
                 </div>
               </div>
@@ -146,11 +156,11 @@ export default function Cart() {
             )}
 
             <div className="space-y-2 text-sm border-t border-gold/10 pt-5">
-              <SummaryLine label="Subtotal" value={subtotal} />
-              {discount > 0 && <SummaryLine label="Discount" value={-discount} />}
-              <SummaryLine label="Shipping" value={shipping} freeLabel={shipping === 0} />
+              <SummaryLine label="Subtotal" value={subtotal} currency={settings.currency} />
+              {discount > 0 && <SummaryLine label="Discount" value={-discount} currency={settings.currency} />}
+              <SummaryLine label="Shipping" value={shipping} currency={settings.currency} freeLabel={shipping === 0} />
               <div className="border-t border-gold/10 pt-3 mt-3">
-                <SummaryLine label="Total" value={total} bold />
+                <SummaryLine label="Total" value={total} currency={settings.currency} bold />
               </div>
             </div>
 
@@ -160,7 +170,7 @@ export default function Cart() {
             >
               Proceed to Checkout
             </button>
-            <p className="text-[11px] text-ivory/40 text-center">Free shipping on orders over $150</p>
+            <p className="text-[11px] text-ivory/40 text-center">Cash on Delivery available across Pakistan</p>
           </div>
         </div>
       )}
@@ -168,12 +178,12 @@ export default function Cart() {
   );
 }
 
-function SummaryLine({ label, value, bold, freeLabel }) {
+function SummaryLine({ label, value, currency, bold, freeLabel }) {
   return (
     <div className={`flex justify-between ${bold ? 'font-semibold text-base' : 'text-ivory/60'}`}>
       <span>{label}</span>
       <span className={bold ? 'text-gold' : ''}>
-        {freeLabel ? 'Free' : `${value < 0 ? '−' : ''}$${Math.abs(value).toFixed(2)}`}
+        {freeLabel ? 'Free' : `${value < 0 ? '−' : ''}${formatCurrency(Math.abs(value), currency)}`}
       </span>
     </div>
   );

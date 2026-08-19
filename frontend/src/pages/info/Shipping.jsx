@@ -5,7 +5,7 @@ export default function Shipping() {
     <StaticPage
       eyebrow="Client Care"
       title="Shipping & Returns"
-      metaDescription="L'Or Noir shipping times, costs, and return policy."
+      metaDescription="Arwa Store shipping times, costs, and return policy."
     >
       <h2>Shipping</h2>
       <p>
@@ -14,10 +14,9 @@ export default function Shipping() {
         business days depending on destination and customs processing.
       </p>
       <ul>
-        <li>Free shipping on all orders over $150</li>
-        <li>Flat $12 shipping fee on orders under $150</li>
-        <li>Currently shipping to over 40 countries</li>
-        <li>Duties and import taxes, where applicable, are calculated at checkout</li>
+        <li>Free delivery on qualifying orders, as shown at checkout</li>
+        <li>Delivery charges, where applicable, are shown in PKR at checkout</li>
+        <li>Delivery is available across Pakistan</li>
       </ul>
 
       <h2>Returns</h2>
@@ -36,7 +35,7 @@ export default function Shipping() {
       <p>
         Sign in to your account, go to Orders, open the relevant order, and
         use the cancel/return option — or write to us at{' '}
-        <a href="mailto:hello@lornoir.com">hello@lornoir.com</a> with your
+        <a href="mailto:hello@arwastore.pk">hello@arwastore.pk</a> with your
         order number and we'll take it from there.
       </p>
     </StaticPage>

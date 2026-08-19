@@ -4,6 +4,7 @@ export const productsApi = {
   list: (params) => api.get('/products', { params }).then((r) => r.data),
   getBySlug: (slug) => api.get(`/products/${slug}`).then((r) => r.data.product),
   getRelated: (slug) => api.get(`/products/${slug}/related`).then((r) => r.data.products),
+  getAvailability: (ids) => api.get('/products/availability', { params: { ids: ids.join(',') } }).then((r) => r.data.products),
   stats: () => api.get('/products/stats').then((r) => r.data.stats),
 };
 

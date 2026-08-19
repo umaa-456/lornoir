@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import ScrollProgressBar from './ScrollProgressBar';
 import CustomCursor from './CustomCursor';
+import WhatsAppButton from './WhatsAppButton';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 
@@ -19,6 +20,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }

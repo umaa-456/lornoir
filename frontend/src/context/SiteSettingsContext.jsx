@@ -2,7 +2,12 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { siteSettingsApi } from '@/services/siteSettings';
 
 const DEFAULTS = {
-  siteName: "L'Or Noir",
+  siteName: 'Arwa Store',
+  currency: 'PKR',
+  whatsapp: {
+    number: '+923176346085',
+    prefilledMessage: 'Assalam-o-Alaikum! ✨\n\nI would like to know more about Arwa Store products.',
+  },
   logo: { url: null },
   hero: {
     eyebrow: 'The 2026 Collection — No. VII',
@@ -14,7 +19,7 @@ const DEFAULTS = {
   },
   footerTagline:
     'Rare fragrances, hand-composed in small batches for those who wear scent as a signature, not an accessory.',
-  contact: { email: 'hello@lornoir.com', phone: '+1 (415) 555-0142', address: '24 Rue de la Paix, Paris' },
+  contact: { email: 'hello@arwastore.pk', phone: '+92 317 6346085', address: 'Pakistan' },
 };
 
 const SiteSettingsContext = createContext({ settings: DEFAULTS, loading: true, refresh: () => {} });

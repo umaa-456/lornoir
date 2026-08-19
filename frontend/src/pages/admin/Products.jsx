@@ -4,14 +4,16 @@ import toast from 'react-hot-toast';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch } from 'react-icons/hi';
 import { TextSkeleton } from '@/components/ui/Loader';
 import adminApi from '@/services/adminApi';
+import { formatCurrency } from '@/utils/currency';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState(null);
   const [search, setSearch] = useState('');
+  const [stockStatus, setStockStatus] = useState('');
 
   const load = () => {
     adminApi
-      .listProducts({ q: search || undefined, limit: 48 })
+      .listProducts({ q: search || undefined, stockStatus: stockStatus || undefined, limit: 48 })
       .then((data) => setProducts(data.products))
       .catch(() => toast.error('Could not load products'));
   };
@@ -19,8 +21,7 @@ export default function AdminProducts() {
   useEffect(() => {
     const timeout = setTimeout(load, 300);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, stockStatus]);
 
   const handleDelete = async (product) => {
     if (!window.confirm(`Remove "${product.name}" from the catalogue?`)) return;
@@ -58,6 +59,14 @@ export default function AdminProducts() {
         />
       </div>
 
+      <div className="flex flex-wrap gap-2" aria-label="Filter products by stock status">
+        {[['', 'All'], ['in_stock', 'In Stock'], ['out_of_stock', 'Out of Stock'], ['coming_soon', 'Coming Soon']].map(([value, label]) => (
+          <button key={value || 'all'} type="button" onClick={() => setStockStatus(value)} className={`px-3 py-2 border text-xs transition-colors ${stockStatus === value ? 'border-gold bg-gold text-obsidian' : 'border-gold/25 text-ivory/60 hover:border-gold/60'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="glass rounded-sm overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
           <thead>
@@ -65,6 +74,7 @@ export default function AdminProducts() {
               <th className="px-6 py-3 font-normal">Product</th>
               <th className="px-6 py-3 font-normal">Brand</th>
               <th className="px-6 py-3 font-normal">Price</th>
+              <th className="px-6 py-3 font-normal">Availability</th>
               <th className="px-6 py-3 font-normal">Stock</th>
               <th className="px-6 py-3 font-normal">Rating</th>
               <th className="px-6 py-3 font-normal text-right">Actions</th>
@@ -81,7 +91,8 @@ export default function AdminProducts() {
               <tr key={p._id} className="border-b border-gold/5 last:border-0 hover:bg-gold/5">
                 <td className="px-6 py-3">{p.name}</td>
                 <td className="px-6 py-3 text-ivory/60">{p.brand?.name}</td>
-                <td className="px-6 py-3">${p.basePrice}</td>
+                <td className="px-6 py-3">{formatCurrency(p.basePrice)}</td>
+                <td className="px-6 py-3"><span className={`text-xs ${p.stockStatus === 'coming_soon' ? 'text-gold' : p.stockStatus === 'out_of_stock' ? 'text-ember-light' : 'text-primary'}`}>{p.stockStatus === 'coming_soon' ? 'Coming Soon' : p.stockStatus === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}</span></td>
                 <td className="px-6 py-3">{p.totalStock ?? '—'}</td>
                 <td className="px-6 py-3 text-gold">{p.rating}★</td>
                 <td className="px-6 py-3">

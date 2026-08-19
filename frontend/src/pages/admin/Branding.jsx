@@ -131,6 +131,43 @@ export default function AdminBranding() {
         </button>
       </form>
 
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          saveSection({ currency: settings.currency, whatsapp: settings.whatsapp }, 'Store contact settings updated');
+        }}
+        className="glass p-6 space-y-4"
+      >
+        <p className="text-sm text-gold">Store Currency & WhatsApp</p>
+        <FormRow label="Currency">
+          <input
+            value={settings.currency || 'PKR'}
+            onChange={(e) => setSettings((s) => ({ ...s, currency: e.target.value.toUpperCase() }))}
+            className="w-full bg-transparent border border-gold/25 px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+          />
+        </FormRow>
+        <FormRow label="WhatsApp number (international format)">
+          <input
+            value={settings.whatsapp?.number || ''}
+            placeholder="+923176346085"
+            onChange={(e) => setSettings((s) => ({ ...s, whatsapp: { ...s.whatsapp, number: e.target.value } }))}
+            className="w-full bg-transparent border border-gold/25 px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+          />
+        </FormRow>
+        <FormRow label="Customer pre-filled WhatsApp message">
+          <textarea
+            rows={3}
+            value={settings.whatsapp?.prefilledMessage || ''}
+            onChange={(e) => setSettings((s) => ({ ...s, whatsapp: { ...s.whatsapp, prefilledMessage: e.target.value } }))}
+            className="w-full bg-transparent border border-gold/25 px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+          />
+        </FormRow>
+        <p className="text-xs text-ivory/50">WhatsApp pre-fills this message for the customer. Configure the full business auto-reply in WhatsApp Business.</p>
+        <button type="submit" disabled={saving} className="px-6 py-2.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Store Contact'}
+        </button>
+      </form>
+
       {/* Hero section text */}
       <form
         onSubmit={(e) => {

@@ -2,7 +2,7 @@ import StaticPage from '@/components/layout/StaticPage';
 
 export default function Privacy() {
   return (
-    <StaticPage eyebrow="Legal" title="Privacy Policy" metaDescription="How L'Or Noir collects, uses, and protects your data.">
+    <StaticPage eyebrow="Legal" title="Privacy Policy" metaDescription="How Arwa Store collects, uses, and protects your data.">
       <p>Last updated: January 2026</p>
 
       <h2>What we collect</h2>
@@ -35,7 +35,7 @@ export default function Privacy() {
       <p>
         You can access, correct, or delete your account data at any time
         from your account settings, or by writing to{' '}
-        <a href="mailto:hello@lornoir.com">hello@lornoir.com</a>.
+        <a href="mailto:hello@arwastore.pk">hello@arwastore.pk</a>.
       </p>
     </StaticPage>
   );

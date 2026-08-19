@@ -10,6 +10,8 @@ const router = Router();
 router.get('/', productController.listProducts);
 router.get('/stats', productController.getCatalogueStats);
 router.get('/low-stock', protect, restrictTo('admin', 'employee'), productController.getLowStockProducts);
+router.get('/id/:id', protect, restrictTo('admin', 'employee'), productController.getAdminProduct);
+router.get('/availability', productController.getProductsAvailability);
 router.get('/:slug', productController.getProduct);
 router.get('/:slug/related', productController.getRelatedProducts);
 
@@ -29,6 +31,7 @@ router.post(
 );
 
 router.patch('/:id', protect, restrictTo('admin'), productController.updateProduct);
+router.patch('/:id/images/order', protect, restrictTo('admin'), productController.reorderProductImages);
 router.delete('/:id', protect, restrictTo('admin'), productController.deleteProduct);
 router.post(
   '/:id/images',

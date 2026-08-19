@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { productsApi } from '@/services/products';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'lornoir_cart';
@@ -22,6 +23,10 @@ export function CartProvider({ children }) {
   }, [items]);
 
   const addToCart = (product, variant, qty = 1) => {
+    if (product.stockStatus && product.stockStatus !== 'in_stock') {
+      toast.error(product.stockStatus === 'coming_soon' ? 'This product is coming soon' : 'This product is currently out of stock');
+      return;
+    }
     setItems((prev) => {
       const lineId = `${product._id}-${variant?.sku || 'default'}`;
       const existing = prev.find((i) => i.lineId === lineId);
@@ -42,6 +47,7 @@ export function CartProvider({ children }) {
           sku: variant?.sku || product.sku,
           qty,
           stock: variant?.stock ?? product.stock,
+          stockStatus: product.stockStatus || 'in_stock',
         },
       ];
     });
@@ -60,6 +66,27 @@ export function CartProvider({ children }) {
   };
 
   const clearCart = () => setItems([]);
+
+  const revalidateCart = async () => {
+    if (!items.length) return [];
+    try {
+      const products = await productsApi.getAvailability([...new Set(items.map((item) => item.productId))]);
+      const productById = new Map(products.map((product) => [product._id, product]));
+      const unavailable = [];
+      setItems((current) => current.map((item) => {
+        const product = productById.get(item.productId);
+        const variant = product?.variants?.find((value) => value.sku === item.sku);
+        const stockStatus = product?.stockStatus || 'out_of_stock';
+        const stock = variant?.stock ?? 0;
+        if (stockStatus !== 'in_stock' || stock < item.qty) unavailable.push(item.name);
+        return { ...item, stockStatus, stock };
+      }));
+      return unavailable;
+    } catch {
+      // The order API remains authoritative if this convenience check fails.
+      return [];
+    }
+  };
 
   const applyCoupon = (couponData) => {
     setCoupon(couponData);
@@ -99,6 +126,7 @@ export function CartProvider({ children }) {
     clearCart,
     applyCoupon,
     removeCoupon,
+    revalidateCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

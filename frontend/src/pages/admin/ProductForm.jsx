@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus, HiOutlineTrash, HiArrowLeft } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineTrash, HiArrowLeft, HiChevronLeft, HiChevronRight, HiStar } from 'react-icons/hi';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import adminApi from '@/services/adminApi';
 import api from '@/services/api';
@@ -34,6 +34,7 @@ export default function AdminProductForm() {
       description: '',
       notes: { top: '', heart: '', base: '' },
       tags: [],
+      stockStatus: 'in_stock',
       variants: [{ label: '50ml', sku: '', price: '', compareAtPrice: '', stock: '' }],
     },
   });
@@ -47,13 +48,11 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     loadTaxonomy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!isEdit) return;
-    api.get(`/products/${id}`).then(({ data }) => {
-      const p = data.product;
+    adminApi.getProduct(id).then(({ product: p }) => {
       reset({
         name: p.name,
         brandName: p.brand?.name || '',
@@ -61,11 +60,33 @@ export default function AdminProductForm() {
         description: p.description,
         notes: p.notes,
         tags: p.tags,
+        stockStatus: p.stockStatus || (p.variants?.every((v) => Number(v.stock) === 0) ? 'out_of_stock' : 'in_stock'),
         variants: p.variants,
       });
       setProductImages(p.images || []);
     });
   }, [id, isEdit, reset]);
+
+  const removeExistingImage = async (image) => {
+    if (!window.confirm('Remove this image from the product?')) return;
+    try {
+      const result = await adminApi.deleteProductImage(id, image.publicId);
+      setProductImages(result.product.images || []);
+      toast.success('Image removed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not remove image');
+    }
+  };
+
+  const moveImage = (index, direction) => {
+    const target = index + direction;
+    if (target < 0 || target >= productImages.length) return;
+    setProductImages((images) => {
+      const next = [...images];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   /** Finds an existing brand/category by (case-insensitive) name, or
    * creates a new one on the fly — this is what lets the admin just type
@@ -117,6 +138,7 @@ export default function AdminProductForm() {
         description: data.description,
         notes: data.notes,
         tags: data.tags,
+        stockStatus: data.stockStatus,
         variants: data.variants.map((v) => ({
           ...v,
           price: Number(v.price),
@@ -131,6 +153,10 @@ export default function AdminProductForm() {
       } else {
         const res = await adminApi.createProduct(payload);
         productId = res.product._id;
+      }
+
+      if (isEdit && productImages.length > 1) {
+        await adminApi.reorderProductImages(productId, productImages.map((image) => image.publicId));
       }
 
       // The product is already saved at this point. If the image upload
@@ -254,6 +280,18 @@ export default function AdminProductForm() {
           </div>
         </FormField>
 
+        <FormField label="Stock Status">
+          <div className="grid grid-cols-3 border border-gold/25">
+            {[['in_stock', 'In Stock'], ['out_of_stock', 'Out of Stock'], ['coming_soon', 'Coming Soon']].map(([value, label]) => (
+              <label key={value} className="relative cursor-pointer border-r last:border-r-0 border-gold/20">
+                <input type="radio" value={value} {...register('stockStatus')} className="peer sr-only" />
+                <span className="block px-3 py-3 text-center text-xs tracking-wide text-ivory/60 peer-checked:bg-primary peer-checked:text-white transition-colors">{label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-ivory/45 mt-2">This availability state controls storefront purchasing independently from variant quantities.</p>
+        </FormField>
+
         {/* Variants */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -290,9 +328,17 @@ export default function AdminProductForm() {
         {/* Images */}
         <FormField label="Product Images">
           {productImages.length > 0 && (
-            <div className="flex gap-3 mb-3">
-              {productImages.map((img) => (
-                <img key={img.publicId} src={img.url} alt="" className="w-16 h-16 object-cover rounded-sm border border-gold/20" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {productImages.map((img, index) => (
+                <div key={img.publicId} className="relative aspect-square border border-gold/20 bg-obsidian-light overflow-hidden">
+                  <img src={img.url} alt={img.alt || `Product image ${index + 1}`} className="w-full h-full object-cover" />
+                  {index === 0 && <span className="absolute top-1 left-1 flex items-center gap-1 bg-primary text-white px-1.5 py-1 text-[9px] uppercase tracking-wide"><HiStar /> Primary</span>}
+                  <div className="absolute bottom-1 inset-x-1 flex justify-between gap-1">
+                    <button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} className="p-1 bg-white/90 text-primary disabled:opacity-30" aria-label="Move image earlier"><HiChevronLeft /></button>
+                    <button type="button" onClick={() => moveImage(index, 1)} disabled={index === productImages.length - 1} className="p-1 bg-white/90 text-primary disabled:opacity-30" aria-label="Move image later"><HiChevronRight /></button>
+                    <button type="button" onClick={() => removeExistingImage(img)} className="p-1 bg-white/90 text-ember-light" aria-label="Delete image"><HiOutlineTrash /></button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -300,10 +346,11 @@ export default function AdminProductForm() {
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => setNewImages(Array.from(e.target.files))}
+            onChange={(e) => setNewImages(Array.from(e.target.files || []))}
             className="text-sm text-ivory/60"
           />
-          <p className="text-xs text-ivory/40 mt-1">Uploads to Cloudinary once you save.</p>
+          {newImages.length > 0 && <p className="text-xs text-primary mt-2">{newImages.length} new image{newImages.length === 1 ? '' : 's'} ready to upload.</p>}
+          <p className="text-xs text-ivory/40 mt-1">The first image is the primary storefront image. Use the arrows to set its order; existing images remain until removed.</p>
         </FormField>
 
         <div className="flex gap-3 pt-4">

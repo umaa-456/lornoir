@@ -6,11 +6,14 @@ export const adminApi = {
 
   // Products
   listProducts: (params) => api.get('/products', { params }).then((r) => r.data),
+  getProduct: (id) => api.get(`/products/id/${id}`).then((r) => r.data),
   createProduct: (payload) => api.post('/products', payload).then((r) => r.data),
   updateProduct: (id, payload) => api.patch(`/products/${id}`, payload).then((r) => r.data),
   deleteProduct: (id) => api.delete(`/products/${id}`).then((r) => r.data),
   uploadProductImages: (id, formData) =>
     api.post(`/products/${id}/images`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
+  deleteProductImage: (id, publicId) => api.delete(`/products/${id}/images/${encodeURIComponent(publicId)}`).then((r) => r.data),
+  reorderProductImages: (id, publicIds) => api.patch(`/products/${id}/images/order`, { publicIds }).then((r) => r.data),
   getLowStock: () => api.get('/products/low-stock').then((r) => r.data),
 
   // Brands

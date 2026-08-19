@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { HiHeart, HiOutlineHeart, HiStar } from 'react-icons/hi';
+import { HiHeart, HiOutlineHeart, HiStar, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import Reveal from '@/components/ui/Reveal';
 import ProductCard from '@/components/product/ProductCard';
 import ReviewsSection from '@/components/product/ReviewsSection';
@@ -13,6 +13,8 @@ import { placeholderSwatch } from '@/utils/placeholderSwatch';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import useRecentlyViewed from '@/hooks/useRecentlyViewed';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 const TABS = ['Description', 'Notes', 'Reviews'];
 
@@ -21,6 +23,7 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { slugs: recentSlugs, recordView } = useRecentlyViewed();
+  const { settings } = useSiteSettings();
 
   const [product, setProduct] = useState(null);
   const [notFound, setNotFound] = useState(false);
@@ -50,7 +53,6 @@ export default function ProductDetail() {
       .catch(() => setNotFound(true));
 
     productsApi.getRelated(slug).then(setRelated).catch(() => setRelated([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useEffect(() => {
@@ -80,6 +82,11 @@ export default function ProductDetail() {
   const variant = product.variants[selectedVariant];
   const wishlisted = isWishlisted(product._id);
   const images = product.images?.length ? product.images : [{ url: null }];
+  const showGalleryControls = images.length > 1;
+  const availability = product.stockStatus || 'in_stock';
+  const unavailable = availability !== 'in_stock';
+  const showPrevious = () => setActiveImage((current) => (current - 1 + images.length) % images.length);
+  const showNext = () => setActiveImage((current) => (current + 1) % images.length);
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -89,7 +96,7 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    if (variant.stock === 0) return;
+    if (variant.stock === 0 || unavailable) return;
     addToCart(product, variant, qty);
   };
 
@@ -107,16 +114,16 @@ export default function ProductDetail() {
     offers: {
       '@type': 'Offer',
       url: typeof window !== 'undefined' ? window.location.href : undefined,
-      priceCurrency: 'USD',
+      priceCurrency: settings.currency || 'PKR',
       price: variant.price,
-      availability: variant.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability: !unavailable && variant.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   };
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>{product.name} — L'Or Noir</title>
+        <title>{product.name} — {settings.siteName}</title>
         <meta name="description" content={product.description?.slice(0, 160)} />
         <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
       </Helmet>
@@ -140,6 +147,13 @@ export default function ProductDetail() {
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setZoomStyle({})}
           >
+            {showGalleryControls && (
+              <>
+                <span className="absolute top-4 right-4 z-10 bg-charcoal/80 text-white text-[11px] tracking-wide px-3 py-1.5">{activeImage + 1} / {images.length}</span>
+                <button type="button" onClick={showPrevious} aria-label="Previous product image" className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 text-primary flex items-center justify-center hover:bg-primary hover:text-white"><HiChevronLeft /></button>
+                <button type="button" onClick={showNext} aria-label="Next product image" className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 text-primary flex items-center justify-center hover:bg-primary hover:text-white"><HiChevronRight /></button>
+              </>
+            )}
             {!images[activeImage]?.url && (
               <motion.svg
                 viewBox="0 0 100 170"
@@ -157,7 +171,8 @@ export default function ProductDetail() {
             )}
           </div>
           {images.length > 1 && (
-            <div className="flex gap-3 mt-4">
+            <>
+            <div className="hidden md:flex gap-3 mt-4">
               {images.map((img, i) => (
                 <button
                   key={img.publicId || i}
@@ -171,6 +186,10 @@ export default function ProductDetail() {
                 />
               ))}
             </div>
+            <div className="flex md:hidden justify-center gap-2 mt-4" aria-label="Product image navigation">
+              {images.map((img, i) => <button key={img.publicId || i} type="button" onClick={() => setActiveImage(i)} aria-label={`Show image ${i + 1}`} className={`w-2 h-2 rounded-full transition-colors ${activeImage === i ? 'bg-primary' : 'bg-gold/40'}`} />)}
+            </div>
+            </>
           )}
         </div>
 
@@ -187,7 +206,10 @@ export default function ProductDetail() {
             </span>
           </div>
 
-          <p className="mt-6 text-2xl font-body">${variant.price}</p>
+          <p className="mt-6 text-2xl font-body">{formatCurrency(variant.price, settings.currency)}</p>
+          <p className={`mt-3 text-sm font-medium ${unavailable ? 'text-ember-light' : 'text-primary'}`}>
+            {availability === 'coming_soon' ? 'Coming Soon' : unavailable ? 'Out of Stock' : variant.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
+          </p>
 
           {/* Size / variant selector */}
           <div className="mt-8">
@@ -237,11 +259,11 @@ export default function ProductDetail() {
             </div>
             <button
               onClick={handleAddToCart}
-              disabled={variant.stock === 0}
+              disabled={variant.stock === 0 || unavailable}
               data-cursor-hover
               className="flex-1 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold hover:bg-gold-pale transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {variant.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
+              {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : variant.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
             </button>
             <button
               onClick={() => toggleWishlist(product)}

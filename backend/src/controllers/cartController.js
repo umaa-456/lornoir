@@ -24,6 +24,11 @@ function computeTotals(cart) {
   return { subtotal, discount, shipping, total };
 }
 
+function assertPurchasable(product) {
+  if (product.stockStatus === 'coming_soon') throw ApiError.badRequest('This product is coming soon and cannot be ordered yet');
+  if (product.stockStatus === 'out_of_stock') throw ApiError.badRequest('This product is currently out of stock');
+}
+
 export const getCart = asyncHandler(async (req, res) => {
   const cart = await getOrCreateCart(req.user._id);
   res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
@@ -34,6 +39,7 @@ export const addToCart = asyncHandler(async (req, res) => {
 
   const product = await Product.findById(productId);
   if (!product || !product.isActive) throw ApiError.notFound('Product not found');
+  assertPurchasable(product);
 
   const variant = product.variants.find((v) => v.sku === sku) || product.variants[0];
   if (variant.stock < qty) throw ApiError.badRequest('Not enough stock available');
@@ -68,7 +74,13 @@ export const updateCartItem = asyncHandler(async (req, res) => {
   const item = cart.items.find((i) => i.sku === sku);
   if (!item) throw ApiError.notFound('Item not in cart');
 
-  item.qty = qty;
+  const product = await Product.findOne({ _id: item.product, isActive: true });
+  if (!product) throw ApiError.badRequest(`${item.name} is no longer available`);
+  assertPurchasable(product);
+  const variant = product.variants.find((v) => v.sku === sku);
+  if (!variant || variant.stock < qty) throw ApiError.badRequest(`Not enough stock available for ${item.name}`);
+
+  item.qty = Number(qty);
   await cart.save();
   res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
 });
@@ -96,7 +108,7 @@ export const applyCoupon = asyncHandler(async (req, res) => {
   const cart = await getOrCreateCart(req.user._id);
   const subtotal = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
   if (subtotal < coupon.minSubtotal) {
-    throw ApiError.badRequest(`This coupon requires a minimum order of $${coupon.minSubtotal}`);
+    throw ApiError.badRequest(`This coupon requires a minimum order of PKR ${coupon.minSubtotal}`);
   }
 
   cart.coupon = { code: coupon.code, type: coupon.type, value: coupon.value };

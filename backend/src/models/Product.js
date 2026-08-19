@@ -44,6 +44,11 @@ const productSchema = new mongoose.Schema(
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
     lowStockThreshold: { type: Number, default: 5 },
+    stockStatus: {
+      type: String,
+      enum: ['in_stock', 'out_of_stock', 'coming_soon'],
+      default: 'in_stock',
+    },
     isActive: { type: Boolean, default: true },
     metaTitle: { type: String, default: '' },
     metaDescription: { type: String, default: '' },
@@ -51,12 +56,19 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.pre('validate', function setSlugAndPrice(next) {
-  if (this.name) this.slug = slugify(this.name, { lower: true, strict: true });
+productSchema.pre('validate', async function setSlugAndPrice() {
+  if (this.name && (this.isNew || this.isModified('name') || !this.slug)) {
+    const baseSlug = slugify(this.name, { lower: true, strict: true }) || 'product';
+    let candidate = baseSlug;
+    let suffix = 2;
+    while (await this.constructor.exists({ slug: candidate, isActive: true, _id: { $ne: this._id } })) {
+      candidate = `${baseSlug}-${suffix++}`;
+    }
+    this.slug = candidate;
+  }
   if (this.variants?.length) {
     this.basePrice = Math.min(...this.variants.map((v) => v.price));
   }
-  next();
 });
 
 productSchema.index({ name: 'text', description: 'text' });

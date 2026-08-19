@@ -9,13 +9,16 @@ import FormField, { inputClass } from '@/components/ui/FormField';
 import StripePaymentForm from '@/components/checkout/StripePaymentForm';
 import { useCart } from '@/context/CartContext';
 import api from '@/services/api';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const STEPS = ['Address', 'Payment', 'Review'];
 
 export default function Checkout() {
-  const { items, subtotal, discount, shipping, total, coupon, clearCart } = useCart();
+  const { items, subtotal, discount, shipping, total, coupon, clearCart, revalidateCart } = useCart();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState(null);
@@ -48,6 +51,18 @@ export default function Checkout() {
   const placeOrder = async (stripePaymentIntentId = null) => {
     setPlacingOrder(true);
     try {
+      const unavailable = await revalidateCart();
+      if (unavailable.length) {
+        toast.error('This product is currently out of stock. Please remove it from your cart before continuing.');
+        navigate('/cart');
+        return;
+      }
+      // Synchronize the guest-friendly local cart with the protected server
+      // cart so availability is authoritatively checked before ordering.
+      await api.delete('/cart');
+      for (const item of items) {
+        await api.post('/cart/items', { productId: item.productId, sku: item.sku, qty: item.qty });
+      }
       const { data: addressRes } = await api.post('/addresses', { ...address, isDefault: true });
       const { data: orderRes } = await api.post('/orders', {
         shippingAddressId: addressRes.address._id,
@@ -65,7 +80,7 @@ export default function Checkout() {
 
   return (
     <div className="pt-32 pb-24 max-w-5xl mx-auto px-6 md:px-10">
-      <Helmet><title>Checkout — L'Or Noir</title></Helmet>
+      <Helmet><title>Checkout — {settings.siteName}</title></Helmet>
 
       <p className="eyebrow mb-3">Complete Your Order</p>
       <h1 className="heading-display text-4xl mb-10">Checkout</h1>
@@ -153,7 +168,7 @@ export default function Checkout() {
               {paymentMethod === 'stripe' &&
                 (clientSecret ? (
                   <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-                    <StripePaymentForm onSuccess={(intentId) => placeOrder(intentId)} submitLabel={`Pay $${total.toFixed(2)}`} />
+                    <StripePaymentForm onSuccess={(intentId) => placeOrder(intentId)} submitLabel={`Pay ${formatCurrency(total, settings.currency)}`} />
                   </Elements>
                 ) : (
                   <p className="text-ivory/50 text-sm">Preparing secure payment form…</p>
@@ -189,15 +204,15 @@ export default function Checkout() {
             {items.map((item) => (
               <div key={item.lineId} className="flex justify-between text-xs text-ivory/60">
                 <span>{item.name} × {item.qty}</span>
-                <span>${(item.price * item.qty).toFixed(2)}</span>
+                <span>{formatCurrency(item.price * item.qty, settings.currency)}</span>
               </div>
             ))}
           </div>
           <div className="border-t border-gold/10 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-            {discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−${discount.toFixed(2)}</span></div>}
-            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span></div>
-            <div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">${total.toFixed(2)}</span></div>
+            <div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>{formatCurrency(subtotal, settings.currency)}</span></div>
+            {discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−{formatCurrency(discount, settings.currency)}</span></div>}
+            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{shipping === 0 ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
+            <div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">{formatCurrency(total, settings.currency)}</span></div>
           </div>
         </div>
       </div>

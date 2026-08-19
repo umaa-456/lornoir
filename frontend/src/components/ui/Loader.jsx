@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export function PageLoader() {
+  const { settings } = useSiteSettings();
   return (
     <div className="fixed inset-0 z-[200] bg-obsidian flex flex-col items-center justify-center gap-6">
       <motion.div
@@ -33,10 +35,10 @@ export function PageLoader() {
           />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center font-script text-gold text-lg">
-          N
+          {settings.siteName?.[0] || 'A'}
         </span>
       </motion.div>
-      <p className="eyebrow tracking-widest3">L'Or Noir</p>
+      <p className="eyebrow tracking-widest3">{settings.siteName}</p>
     </div>
   );
 }

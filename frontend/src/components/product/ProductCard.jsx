@@ -6,6 +6,8 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { placeholderSwatch, productImage } from '@/utils/placeholderSwatch';
 import QuickViewModal from './QuickViewModal';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function ProductCard({ product }) {
   const cardRef = useRef(null);
@@ -13,6 +15,7 @@ export default function ProductCard({ product }) {
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { settings } = useSiteSettings();
   const wishlisted = isWishlisted(product._id);
 
   const image = productImage(product);
@@ -20,6 +23,8 @@ export default function ProductCard({ product }) {
   const price = defaultVariant?.price ?? product.basePrice;
   const compareAtPrice = defaultVariant?.compareAtPrice;
   const onSale = compareAtPrice && compareAtPrice > price;
+  const availability = product.stockStatus || 'in_stock';
+  const unavailable = availability !== 'in_stock';
 
   const handleMouseMove = (e) => {
     const el = cardRef.current;
@@ -77,6 +82,11 @@ export default function ProductCard({ product }) {
                 New
               </span>
             )}
+            {unavailable && (
+              <span className="absolute top-3 left-3 bg-charcoal text-white text-[10px] tracking-widest2 uppercase px-2 py-1 border border-gold/50">
+                {availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock'}
+              </span>
+            )}
           </motion.div>
 
           {/* Hover actions */}
@@ -103,10 +113,10 @@ export default function ProductCard({ product }) {
           <button
             data-cursor-hover
             onClick={handleQuickAdd}
-            disabled={!defaultVariant || defaultVariant.stock === 0}
+            disabled={!defaultVariant || defaultVariant.stock === 0 || unavailable}
             className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-obsidian/90 backdrop-blur-sm text-ivory text-[11px] tracking-widest2 uppercase py-3 hover:bg-gold hover:text-obsidian disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {defaultVariant?.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
+            {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : defaultVariant?.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
           </button>
         </div>
 
@@ -120,9 +130,9 @@ export default function ProductCard({ product }) {
             <span className="text-xs text-ivory/40">({product.reviewCount ?? 0})</span>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <span className="font-body text-sm">${price}</span>
+            <span className="font-body text-sm">{formatCurrency(price, settings.currency)}</span>
             {onSale && (
-              <span className="font-body text-xs text-ivory/40 line-through">${compareAtPrice}</span>
+              <span className="font-body text-xs text-ivory/40 line-through">{formatCurrency(compareAtPrice, settings.currency)}</span>
             )}
           </div>
         </Link>

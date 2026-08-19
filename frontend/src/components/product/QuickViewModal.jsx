@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import { HiX, HiStar } from 'react-icons/hi';
 import { useCart } from '@/context/CartContext';
 import { placeholderSwatch, productImage } from '@/utils/placeholderSwatch';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function QuickViewModal({ product, open, onClose }) {
+  const { settings } = useSiteSettings();
   const { addToCart } = useCart();
   if (!product) return null;
 
   const image = productImage(product);
   const defaultVariant = product.variants?.[0];
   const price = defaultVariant?.price ?? product.basePrice;
+  const unavailable = (product.stockStatus || 'in_stock') !== 'in_stock';
 
   return (
     <AnimatePresence>
@@ -69,9 +73,9 @@ export default function QuickViewModal({ product, open, onClose }) {
               </div>
 
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl font-body">${price}</span>
+                <span className="text-2xl font-body">{formatCurrency(price, settings.currency)}</span>
                 {defaultVariant?.compareAtPrice && (
-                  <span className="text-sm text-ivory/40 line-through">${defaultVariant.compareAtPrice}</span>
+                  <span className="text-sm text-ivory/40 line-through">{formatCurrency(defaultVariant.compareAtPrice, settings.currency)}</span>
                 )}
               </div>
 
@@ -93,14 +97,14 @@ export default function QuickViewModal({ product, open, onClose }) {
               <div className="mt-8 flex flex-col gap-3">
                 <button
                   data-cursor-hover
-                  disabled={!defaultVariant || defaultVariant.stock === 0}
+                  disabled={!defaultVariant || defaultVariant.stock === 0 || unavailable}
                   onClick={() => {
                     addToCart(product, defaultVariant, 1);
                     onClose();
                   }}
                   className="w-full py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold hover:bg-gold-pale transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {defaultVariant?.stock === 0 ? 'Out of Stock' : `Add to Bag — $${price}`}
+                  {defaultVariant?.stock === 0 ? 'Out of Stock' : `Add to Bag — ${formatCurrency(price, settings.currency)}`}
                 </button>
                 <Link
                   to={`/product/${product.slug}`}

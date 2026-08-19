@@ -22,6 +22,7 @@ export const listProducts = asyncHandler(async (req, res) => {
     maxPrice,
     minRating,
     tag,
+    stockStatus,
     sort = 'featured',
     page = 1,
     limit = 12,
@@ -51,6 +52,7 @@ export const listProducts = asyncHandler(async (req, res) => {
 
   if (minRating) filter.rating = { $gte: Number(minRating) };
   if (tag) filter.tags = tag;
+  if (['in_stock', 'out_of_stock', 'coming_soon'].includes(stockStatus)) filter.stockStatus = stockStatus;
 
   const pageNum = Math.max(1, Number(page));
   const limitNum = Math.min(48, Number(limit));
@@ -85,6 +87,23 @@ export const getProduct = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, product });
 });
 
+export const getAdminProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+    .populate('brand', 'name slug')
+    .populate('category', 'name slug');
+  if (!product) throw ApiError.notFound('Product not found');
+  res.status(200).json({ success: true, product });
+});
+
+// Public, minimal availability projection for revalidating a browser cart.
+export const getProductsAvailability = asyncHandler(async (req, res) => {
+  const ids = String(req.query.ids || '').split(',').filter((id) => /^[a-f\d]{24}$/i.test(id));
+  if (!ids.length) return res.status(200).json({ success: true, products: [] });
+  const products = await Product.find({ _id: { $in: ids }, isActive: true })
+    .select('_id stockStatus variants.sku variants.stock');
+  res.status(200).json({ success: true, products });
+});
+
 export const getRelatedProducts = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug });
   if (!product) throw ApiError.notFound('Product not found');
@@ -108,17 +127,37 @@ export const createProduct = asyncHandler(async (req, res) => {
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound('Product not found');
+  product.set(req.body);
+  await product.save();
+  res.status(200).json({ success: true, product });
+});
+
+export const reorderProductImages = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) throw ApiError.notFound('Product not found');
+  const requestedIds = req.body.publicIds;
+  if (!Array.isArray(requestedIds) || requestedIds.length !== product.images.length) {
+    throw ApiError.badRequest('Provide every existing image when reordering');
+  }
+  const imageMap = new Map(product.images.map((image) => [image.publicId, image]));
+  if (new Set(requestedIds).size !== product.images.length || requestedIds.some((publicId) => !imageMap.has(publicId))) {
+    throw ApiError.badRequest('Invalid image order');
+  }
+  product.images = requestedIds.map((publicId) => imageMap.get(publicId));
+  await product.save();
   res.status(200).json({ success: true, product });
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound('Product not found');
+  product.isActive = false;
+  // Keep historical order references intact while freeing the customer-facing
+  // slug for a future product with the same name.
+  product.slug = `${product.slug}-archived-${product._id.toString().slice(-6)}`;
+  await product.save();
   res.status(200).json({ success: true, message: 'Product removed' });
 });
 

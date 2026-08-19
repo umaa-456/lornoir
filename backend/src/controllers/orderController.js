@@ -13,7 +13,7 @@ import { getStripe } from '../services/stripeService.js';
 function generateOrderNumber() {
   const stamp = Date.now().toString(36).toUpperCase();
   const rand = crypto.randomBytes(2).toString('hex').toUpperCase();
-  return `LON-${stamp}-${rand}`;
+  return `ARW-${stamp}-${rand}`;
 }
 
 function snapshotAddress(addr) {
@@ -56,20 +56,29 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   // Verify stock and decrement atomically per item
   for (const item of cart.items) {
-    const product = await Product.findOne({ _id: item.product, 'variants.sku': item.sku });
+    const product = await Product.findOne({ _id: item.product, 'variants.sku': item.sku, isActive: true });
     if (!product) throw ApiError.badRequest(`${item.name} is no longer available`);
+    if (product.stockStatus === 'coming_soon') throw ApiError.badRequest(`${item.name} is coming soon and cannot be ordered yet`);
+    if (product.stockStatus === 'out_of_stock') throw ApiError.badRequest(`${item.name} is currently out of stock. Please remove it from your cart before continuing.`);
     const variant = product.variants.find((v) => v.sku === item.sku);
     if (variant.stock < item.qty) throw ApiError.badRequest(`Not enough stock for ${item.name}`);
   }
 
-  await Promise.all(
-    cart.items.map((item) =>
-      Product.updateOne(
-        { _id: item.product, 'variants.sku': item.sku },
-        { $inc: { 'variants.$.stock': -item.qty } }
-      )
-    )
-  );
+  // Repeat the availability predicates in the write. This prevents a stale
+  // checkout from decrementing stock after an admin marks a product
+  // unavailable or another customer purchases the final unit.
+  const decrements = await Promise.all(cart.items.map((item) => Product.updateOne(
+    {
+      _id: item.product,
+      isActive: true,
+      stockStatus: 'in_stock',
+      variants: { $elemMatch: { sku: item.sku, stock: { $gte: item.qty } } },
+    },
+    { $inc: { 'variants.$.stock': -item.qty } }
+  )));
+  if (decrements.some((result) => result.modifiedCount !== 1)) {
+    throw ApiError.badRequest('One or more products are no longer available. Please review your cart and try again.');
+  }
 
   const subtotal = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
   let discount = 0;

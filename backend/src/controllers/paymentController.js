@@ -22,7 +22,7 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
 
   const paymentIntent = await getStripe().paymentIntents.create({
     amount: Math.round(total * 100), // Stripe expects the smallest currency unit
-    currency: 'usd',
+    currency: 'pkr',
     automatic_payment_methods: { enabled: true },
     metadata: { userId: req.user._id.toString() },
   });

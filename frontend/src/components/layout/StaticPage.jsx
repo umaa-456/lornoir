@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import Reveal from '@/components/ui/Reveal';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 /**
  * Consistent shell for editorial/legal/informational pages — keeps
@@ -7,10 +8,11 @@ import Reveal from '@/components/ui/Reveal';
  * etc. without every page reimplementing the same header block.
  */
 export default function StaticPage({ eyebrow, title, subtitle, metaDescription, maxWidth = 'max-w-3xl', children }) {
+  const { settings } = useSiteSettings();
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>{title} — L'Or Noir</title>
+        <title>{title} — {settings.siteName}</title>
         {metaDescription && <meta name="description" content={metaDescription} />}
       </Helmet>
 

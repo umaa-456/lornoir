@@ -10,9 +10,11 @@ export const getSiteSettings = asyncHandler(async (req, res) => {
 
 export const updateSiteSettings = asyncHandler(async (req, res) => {
   const settings = await SiteSettings.getSingleton();
-  const { siteName, hero, footerTagline, contact } = req.body;
+  const { siteName, currency, whatsapp, hero, footerTagline, contact } = req.body;
 
   if (siteName !== undefined) settings.siteName = siteName;
+  if (currency !== undefined) settings.currency = currency;
+  if (whatsapp) settings.whatsapp = { ...settings.whatsapp.toObject(), ...whatsapp };
   if (hero) settings.hero = { ...settings.hero.toObject(), ...hero };
   if (footerTagline !== undefined) settings.footerTagline = footerTagline;
   if (contact) settings.contact = { ...settings.contact.toObject(), ...contact };

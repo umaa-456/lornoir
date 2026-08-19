@@ -1,6 +1,10 @@
+import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { formatCurrency } from '@/utils/currency';
+
 const RATINGS = [4, 3];
 
 export default function FilterSidebar({ filters, onChange, onReset, priceBounds, categories, brands }) {
+  const { settings } = useSiteSettings();
   const toggle = (key, value) => {
     const current = filters[key];
     const next = current.includes(value)
@@ -54,9 +58,9 @@ export default function FilterSidebar({ filters, onChange, onReset, priceBounds,
             aria-label="Maximum price"
           />
           <div className="flex justify-between text-xs text-ivory/50 mt-2">
-            <span>${priceBounds.min}</span>
-            <span className="text-gold">Up to ${filters.maxPrice}</span>
-            <span>${priceBounds.max}</span>
+            <span>{formatCurrency(priceBounds.min, settings.currency)}</span>
+            <span className="text-gold">Up to {formatCurrency(filters.maxPrice, settings.currency)}</span>
+            <span>{formatCurrency(priceBounds.max, settings.currency)}</span>
           </div>
         </div>
       </FilterGroup>

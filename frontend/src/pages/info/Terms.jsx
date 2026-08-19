@@ -2,7 +2,7 @@ import StaticPage from '@/components/layout/StaticPage';
 
 export default function Terms() {
   return (
-    <StaticPage eyebrow="Legal" title="Terms of Service" metaDescription="L'Or Noir terms of service.">
+    <StaticPage eyebrow="Legal" title="Terms of Service" metaDescription="Arwa Store terms of service.">
       <p>Last updated: January 2026</p>
 
       <h2>Orders and payment</h2>
@@ -25,7 +25,7 @@ export default function Terms() {
       <p>
         You're responsible for keeping your account password confidential
         and for all activity under your account. Let us know immediately at{' '}
-        <a href="mailto:hello@lornoir.com">hello@lornoir.com</a> if you
+        <a href="mailto:hello@arwastore.pk">hello@arwastore.pk</a> if you
         suspect unauthorized access.
       </p>
 
