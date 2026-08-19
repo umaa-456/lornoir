@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export default function AuthLayout({ eyebrow, title, subtitle, children, footer }) {
   return (
-    <div className="min-h-screen bg-noir-radial flex items-center justify-center px-6 py-28">
+    <div className="luxury-dark min-h-screen bg-noir-radial flex items-center justify-center px-6 py-28">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

@@ -24,32 +24,34 @@ export default {
           // text-gold, bg-gold, border-gold/40, etc.) but re-valued to the
           // new black + orange identity, so every existing usage updates
           // automatically instead of requiring a find/replace of class names.
-          pale: '#FFC896',
-          DEFAULT: '#F2701A',
-          deep: '#B84E12',
-          line: 'rgba(242, 112, 26, 0.35)',
+          pale: '#E4D1A7',
+          DEFAULT: '#C9A45C',
+          deep: '#A8813F',
+          line: 'rgba(201, 164, 92, 0.35)',
         },
+        primary: '#123C35',
+        charcoal: '#171A18',
         ember: {
           DEFAULT: '#5B1A1A',
           light: '#7A2A20',
         },
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'sans-serif'],
-        body: ['"Manrope"', 'sans-serif'],
-        script: ['"Space Grotesk"', 'sans-serif'],
+        display: ['"Playfair Display"', 'serif'],
+        body: ['"DM Sans"', 'sans-serif'],
+        script: ['"Playfair Display"', 'serif'],
       },
       letterSpacing: {
         widest2: '0.35em',
         widest3: '0.5em',
       },
       backgroundImage: {
-        'gold-sheen': 'linear-gradient(115deg, #B84E12 0%, #FFC896 28%, #F2701A 45%, #FFE8CC 55%, #B84E12 100%)',
-        'noir-radial': 'radial-gradient(circle at 50% 20%, #17253D 0%, #080F1C 70%)',
+        'gold-sheen': 'linear-gradient(115deg, #A8813F 0%, #E4D1A7 32%, #C9A45C 52%, #F8F5EE 68%, #A8813F 100%)',
+        'noir-radial': 'radial-gradient(circle at 50% 15%, #234F46 0%, #171A18 72%)',
       },
       boxShadow: {
-        gold: '0 0 40px -10px rgba(242,112,26,0.45)',
-        glass: '0 8px 32px 0 rgba(0,0,0,0.45)',
+        gold: '0 16px 36px -22px rgba(18,60,53,0.45)',
+        glass: '0 12px 30px -24px rgba(23,26,24,0.35)',
       },
       backdropBlur: {
         xs: '2px',

@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
 
   return (
     <>
-      <div className="group relative flex flex-col">
+      <div className="group relative flex flex-col bg-obsidian-light border border-gold/20 p-3 transition-[border-color,transform] duration-300 hover:border-gold/50 hover:-translate-y-0.5">
         <div
           ref={cardRef}
           onMouseMove={handleMouseMove}
@@ -58,10 +58,10 @@ export default function ProductCard({ product }) {
           >
             {!image && (
               <svg viewBox="0 0 100 170" className="w-16 opacity-90" style={{ transform: 'translateZ(40px)' }} aria-hidden="true">
-                <rect x="35" y="10" width="30" height="18" rx="2" fill="#080F1C" opacity="0.55" />
+                <rect x="35" y="10" width="30" height="18" rx="2" fill="#171A18" opacity="0.55" />
                 <path
                   d="M28 28 Q28 46 24 60 L24 150 Q24 160 34 160 L66 160 Q76 160 76 150 L76 60 Q72 46 72 28 Z"
-                  fill="#080F1C"
+                  fill="#171A18"
                   opacity="0.45"
                 />
               </svg>

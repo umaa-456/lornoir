@@ -41,7 +41,7 @@ export default function FlashSale() {
   if (saleProducts !== null && saleProducts.length === 0) return null;
 
   return (
-    <section className="relative py-24 border-y border-gold/10 overflow-hidden">
+    <section className="luxury-dark relative py-24 border-y border-gold/20 overflow-hidden">
       <div className="absolute inset-0 bg-noir-radial opacity-60" aria-hidden="true" />
       <div className="relative max-w-7xl mx-auto px-6 md:px-10">
         <Reveal className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-12">

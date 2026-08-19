@@ -219,12 +219,12 @@ function PaymentOption({ active, onClick, label }) {
 }
 
 const stripeAppearance = {
-  theme: 'night',
+  theme: 'flat',
   variables: {
-    colorPrimary: '#F2701A',
-    colorBackground: '#0F192B',
-    colorText: '#FFFFFF',
-    fontFamily: 'Manrope, sans-serif',
+    colorPrimary: '#123C35',
+    colorBackground: '#FFFFFF',
+    colorText: '#252525',
+    fontFamily: 'DM Sans, sans-serif',
     borderRadius: '2px',
   },
 };

@@ -3,75 +3,47 @@
 @tailwind utilities;
 
 :root,
-html.dark {
-  color-scheme: dark;
-  /* Dark theme (default): obsidian = deep navy background, ivory = white text */
-  --c-obsidian: 8 15 28;
-  --c-obsidian-light: 15 25 43;
-  --c-obsidian-lighter: 23 37 61;
-  --c-ivory: 255 255 255;
-  --c-ivory-dim: 203 212 227;
-}
-
+html.dark,
 html.light {
   color-scheme: light;
-  /* Light theme: same token NAMES, inverted VALUES — obsidian becomes the
-     white background, ivory becomes the navy text. Every existing
-     bg-obsidian / text-ivory usage across the app then just works. */
-  --c-obsidian: 255 255 255;
-  --c-obsidian-light: 240 243 248;
-  --c-obsidian-lighter: 226 231 240;
-  --c-ivory: 8 15 28;
-  --c-ivory-dim: 46 58 79;
+  --color-background: #F8F5EE;
+  --color-primary: #123C35;
+  --color-dark: #171A18;
+  --color-accent: #C9A45C;
+  --color-text: #252525;
+  --color-text-secondary: #716B61;
+  --color-card: #FFFFFF;
+  --font-heading: "Playfair Display", serif;
+  --font-body: "DM Sans", sans-serif;
+  /* Legacy Tailwind token names retained to theme existing components. */
+  --c-obsidian: 248 245 238;
+  --c-obsidian-light: 255 255 255;
+  --c-obsidian-lighter: 240 235 225;
+  --c-ivory: 37 37 37;
+  --c-ivory-dim: 113 107 97;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   @apply bg-obsidian text-ivory font-body antialiased;
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  letter-spacing: 0.005em;
 }
 
-/* ---------- Scrollbar ---------- */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #B84E12, #F2701A);
-  border-radius: 4px;
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #123C35, #C9A45C); border-radius: 4px; }
+::selection { background: #123C35; color: #FFFFFF; }
 
-/* ---------- Selection ---------- */
-::selection {
-  background: #F2701A;
-  color: #080F1C;
-}
-
-/* ---------- Focus visibility (accessibility floor) ---------- */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-select:focus-visible {
-  outline: 1px solid #F2701A;
-  outline-offset: 3px;
-}
+select:focus-visible { outline: 2px solid #123C35; outline-offset: 3px; }
 
-/* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -79,117 +51,75 @@ select:focus-visible {
   }
 }
 
-/* ---------- Typography helpers ---------- */
-.eyebrow {
-  @apply font-body text-[11px] tracking-widest2 uppercase text-gold/80;
-}
+.eyebrow { @apply font-body text-[11px] tracking-widest2 uppercase text-gold/90; }
+.heading-display { @apply font-display font-medium; }
 
-.heading-display {
-  @apply font-display font-light;
-}
-
-/* ---------- Glass surface ---------- */
 .glass {
-  background: rgba(21, 19, 15, 0.55);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(242, 112, 26, 0.16);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(201, 164, 92, 0.3);
 }
 
-html.light .glass {
-  background: rgba(246, 241, 231, 0.6);
-  border: 1px solid rgba(140, 109, 47, 0.18);
-}
-
-/* ---------- Gold gradient text ---------- */
 .text-gold-sheen {
-  background: linear-gradient(115deg, #B84E12 0%, #FFD9B0 30%, #F2701A 50%, #FFE8CC 65%, #B84E12 100%);
+  background: linear-gradient(115deg, #A8813F 0%, #E4D1A7 30%, #C9A45C 50%, #F8F5EE 65%, #A8813F 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: shimmer 4.5s linear infinite;
 }
+@keyframes shimmer { to { background-position: 200% center; } }
 
-@keyframes shimmer {
-  to {
-    background-position: 200% center;
-  }
-}
+.hairline { height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 164, 92, 0.6), transparent); }
+@media (pointer: fine) { .cursor-none-desktop { cursor: none; } }
 
-/* ---------- Hairline divider ---------- */
-.hairline {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(242, 112, 26, 0.5), transparent);
-}
-
-/* ---------- Custom cursor (desktop only, see CustomCursor.jsx) ---------- */
-@media (pointer: fine) {
-  .cursor-none-desktop {
-    cursor: none;
-  }
-}
-
-/* ---------- Swiper gold theme ---------- */
 .flash-sale-swiper .swiper-button-next,
 .flash-sale-swiper .swiper-button-prev,
 .reviews-swiper .swiper-button-next,
 .reviews-swiper .swiper-button-prev {
-  color: #F2701A;
+  color: #C9A45C;
   width: 36px;
   height: 36px;
-  background: rgba(21, 19, 15, 0.6);
-  border: 1px solid rgba(242, 112, 26, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(201, 164, 92, 0.45);
   border-radius: 9999px;
   backdrop-filter: blur(6px);
 }
 .flash-sale-swiper .swiper-button-next::after,
 .flash-sale-swiper .swiper-button-prev::after,
 .reviews-swiper .swiper-button-next::after,
-.reviews-swiper .swiper-button-prev::after {
-  font-size: 13px;
-  font-weight: 700;
-}
+.reviews-swiper .swiper-button-prev::after { font-size: 13px; font-weight: 700; }
 
-/* ---------- Static content page prose ---------- */
-.prose-content h2 {
-  @apply font-display text-2xl mt-10 mb-4 text-gold-pale;
-}
-.prose-content h2:first-child {
-  @apply mt-0;
-}
-.prose-content h3 {
-  @apply font-body text-sm tracking-widest2 uppercase text-gold/80 mt-8 mb-3;
-}
-.prose-content p {
-  @apply text-ivory/70 leading-relaxed mb-4;
-}
-.prose-content ul {
-  @apply list-disc list-outside pl-5 space-y-2 text-ivory/70 mb-4;
-}
-.prose-content a {
-  @apply text-gold hover:underline;
-}
-.prose-content strong {
-  @apply text-ivory font-semibold;
-}
+.prose-content h2 { @apply font-display text-2xl mt-10 mb-4 text-primary; }
+.prose-content h2:first-child { @apply mt-0; }
+.prose-content h3 { @apply font-body text-sm tracking-widest2 uppercase text-gold/90 mt-8 mb-3; }
+.prose-content p { @apply text-ivory/70 leading-relaxed mb-4; }
+.prose-content ul { @apply list-disc list-outside pl-5 space-y-2 text-ivory/70 mb-4; }
+.prose-content a { @apply text-primary hover:underline; }
+.prose-content strong { @apply text-ivory font-semibold; }
 
-/* ---------- Skeleton shimmer ---------- */
-.skeleton {
-  position: relative;
-  overflow: hidden;
-  background: rgba(242, 112, 26, 0.08);
-}
+.skeleton { position: relative; overflow: hidden; background: rgba(201, 164, 92, 0.12); }
 .skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(242, 112, 26, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 164, 92, 0.22), transparent);
   animation: skeletonSweep 1.6s infinite;
 }
-@keyframes skeletonSweep {
-  100% {
-    transform: translateX(100%);
-  }
-}
+@keyframes skeletonSweep { 100% { transform: translateX(100%); } }
+
+/* Dark editorial panels retain accessible white type while the rest of the
+   storefront uses the warm ivory canvas. */
+.luxury-dark { color: #FFFFFF; }
+.luxury-dark [class*="text-ivory"] { color: rgba(255, 255, 255, 0.82); }
+.luxury-dark .text-ivory { color: #FFFFFF; }
+.luxury-dark .glass { background: rgba(23, 26, 24, 0.72); border-color: rgba(201, 164, 92, 0.28); }
+
+/* Existing CTA utility usage is promoted from gold to primary emerald;
+   champagne remains a restrained detail, border, badge, and hover accent. */
+button.bg-gold,
+a.bg-gold { background-color: #123C35; color: #FFFFFF; }
+button.bg-gold:hover,
+a.bg-gold:hover { background-color: #0D302A; color: #FFFFFF; }

@@ -7,28 +7,28 @@ const ARTICLES = [
     excerpt:
       'Spraying on dry skin, not rubbing your wrists together, and where on your body actually holds scent best — the small habits that change everything.',
     tag: 'Guide',
-    gradient: 'linear-gradient(155deg,#1a1512,#B84E12)',
+    gradient: 'linear-gradient(155deg,#171A18,#C9A45C)',
   },
   {
     title: 'What "Oud" Actually Is',
     excerpt:
       'Not a single note but a resin formed when Aquilaria trees are infected by a specific mold — and why that origin story explains its price.',
     tag: 'Ingredients',
-    gradient: 'linear-gradient(155deg,#221c14,#F2701A)',
+    gradient: 'linear-gradient(155deg,#123C35,#E4D1A7)',
   },
   {
     title: 'Layering Fragrances Without Making a Mess of It',
     excerpt:
       'A base note from one bottle, a top note from another — layering works, but only with a bit of structure. Here is ours.',
     tag: 'Guide',
-    gradient: 'linear-gradient(155deg,#1c1613,#5b1a1a)',
+    gradient: 'linear-gradient(155deg,#252525,#A8813F)',
   },
   {
     title: 'Inside the Atelier: A Day With Our Perfumer',
     excerpt:
       'From the first accord sketch to the hundredth adjustment — what actually happens between "idea" and "bottled."',
     tag: 'Behind the Scenes',
-    gradient: 'linear-gradient(155deg,#191512,#B84E12)',
+    gradient: 'linear-gradient(155deg,#171A18,#E4D1A7)',
   },
 ];
 

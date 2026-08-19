@@ -49,7 +49,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-obsidian border-t border-gold/10 mt-32">
+    <footer className="luxury-dark relative bg-charcoal border-t border-gold/20 mt-32">
       <div className="hairline absolute -top-px left-0 right-0" />
 
       {/* Newsletter */}

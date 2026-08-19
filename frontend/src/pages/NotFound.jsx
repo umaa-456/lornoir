@@ -6,7 +6,7 @@ export default function NotFound() {
   const is404 = !error || error?.status === 404;
 
   return (
-    <div className="min-h-screen bg-noir-radial flex items-center justify-center px-6 text-center">
+    <div className="luxury-dark min-h-screen bg-noir-radial flex items-center justify-center px-6 text-center">
       <Helmet><title>{is404 ? 'Page Not Found' : 'Something Went Wrong'} — L'Or Noir</title></Helmet>
       <div>
         <p className="font-script text-2xl tracking-widest3 uppercase text-gold-sheen mb-8">L'Or Noir</p>

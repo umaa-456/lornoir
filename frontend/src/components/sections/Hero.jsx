@@ -94,7 +94,7 @@ export default function Hero() {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-screen flex items-center overflow-hidden bg-noir-radial"
+      className="luxury-dark relative min-h-screen flex items-center overflow-hidden bg-noir-radial"
     >
       {/* Ambient gold particles */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -170,9 +170,9 @@ export default function Hero() {
             >
               <defs>
                 <linearGradient id="bottleGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#FFD9B0" />
-                  <stop offset="50%" stopColor="#F2701A" />
-                  <stop offset="100%" stopColor="#B84E12" />
+                  <stop offset="0%" stopColor="#E4D1A7" />
+                  <stop offset="50%" stopColor="#C9A45C" />
+                  <stop offset="100%" stopColor="#A8813F" />
                 </linearGradient>
               </defs>
               <rect x="70" y="20" width="60" height="36" rx="4" fill="url(#bottleGrad)" opacity="0.9" />
@@ -182,7 +182,7 @@ export default function Hero() {
                 fill="url(#bottleGrad)"
                 opacity="0.85"
               />
-              <rect x="55" y="150" width="90" height="60" fill="#080F1C" opacity="0.35" />
+              <rect x="55" y="150" width="90" height="60" fill="#171A18" opacity="0.35" />
             </svg>
           )}
         </div>
