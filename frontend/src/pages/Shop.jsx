@@ -8,6 +8,7 @@ import { ProductCardSkeleton } from '@/components/ui/Loader';
 import ProductCard from '@/components/product/ProductCard';
 import FilterSidebar from '@/components/product/FilterSidebar';
 import { productsApi, brandsApi, categoriesApi } from '@/services/products';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 const PRICE_BOUNDS = { min: 0, max: 1000 };
 const SORTS = [
@@ -18,6 +19,7 @@ const SORTS = [
 ];
 
 export default function Shop() {
+  const { settings } = useSiteSettings();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('featured');
@@ -87,8 +89,8 @@ export default function Shop() {
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Shop All Fragrances — L'Or Noir</title>
-        <meta name="description" content="Browse the full L'Or Noir collection — oud, floral, woody, leather, and gourmand compositions." />
+        <title>Shop — {settings.siteName}</title>
+        <meta name="description" content={`Browse the ${settings.siteName} collection.`} />
       </Helmet>
 
       <Reveal className="mb-12">

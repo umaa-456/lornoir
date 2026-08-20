@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import Reveal from '@/components/ui/Reveal';
 
 const ARTICLES = [
@@ -33,11 +34,12 @@ const ARTICLES = [
 ];
 
 export default function Journal() {
+  const { settings } = useSiteSettings();
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Journal — L'Or Noir</title>
-        <meta name="description" content="Notes on fragrance, ingredients, and the craft behind L'Or Noir." />
+        <title>Journal — {settings.siteName}</title>
+        <meta name="description" content={`News and notes from ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-xl">

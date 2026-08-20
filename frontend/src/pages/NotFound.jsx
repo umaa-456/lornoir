@@ -1,15 +1,17 @@
 import { Link, useRouteError } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function NotFound() {
+  const { settings } = useSiteSettings();
   const error = useRouteError();
   const is404 = !error || error?.status === 404;
 
   return (
     <div className="luxury-dark min-h-screen bg-noir-radial flex items-center justify-center px-6 text-center">
-      <Helmet><title>{is404 ? 'Page Not Found' : 'Something Went Wrong'} — L'Or Noir</title></Helmet>
+      <Helmet><title>{is404 ? 'Page Not Found' : 'Something Went Wrong'} — {settings.siteName}</title></Helmet>
       <div>
-        <p className="font-script text-2xl tracking-widest3 uppercase text-gold-sheen mb-8">L'Or Noir</p>
+        <p className="font-script text-2xl tracking-widest3 uppercase text-gold-sheen mb-8">{settings.siteName}</p>
         <p className="eyebrow mb-3">{is404 ? '404' : 'Error'}</p>
         <h1 className="heading-display text-4xl md:text-5xl mb-6">
           {is404 ? 'This page has drifted out of scent.' : 'Something went wrong.'}

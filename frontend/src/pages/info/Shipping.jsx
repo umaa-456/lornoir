@@ -5,7 +5,7 @@ export default function Shipping() {
     <StaticPage
       eyebrow="Client Care"
       title="Shipping & Returns"
-      metaDescription="Arwa Store shipping times, costs, and return policy."
+      metaDescription="Shipping times, costs, and return policy."
     >
       <h2>Shipping</h2>
       <p>

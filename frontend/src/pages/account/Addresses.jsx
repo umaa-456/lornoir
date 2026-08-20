@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import { HiOutlinePlus, HiOutlineTrash, HiOutlineStar, HiX } from 'react-icons/hi';
 import api from '@/services/api';
@@ -7,6 +8,7 @@ import api from '@/services/api';
 const empty = { label: 'Home', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', postalCode: '', country: '' };
 
 export default function Addresses() {
+  const { settings } = useSiteSettings();
   const [addresses, setAddresses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(empty);
@@ -45,7 +47,7 @@ export default function Addresses() {
 
   return (
     <div>
-      <Helmet><title>Your Addresses — L'Or Noir</title></Helmet>
+      <Helmet><title>Your Addresses — {settings.siteName}</title></Helmet>
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gold">Saved Addresses</p>
         <button onClick={() => setShowForm((v) => !v)} className="flex items-center gap-1.5 text-xs text-gold hover:underline">

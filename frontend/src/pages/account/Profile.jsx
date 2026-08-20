@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import { HiOutlineCamera } from 'react-icons/hi';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 
 export default function Profile() {
+  const { settings } = useSiteSettings();
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
   const [profile, setProfile] = useState({ name: user?.name || '', phone: user?.phone || '' });
@@ -70,7 +72,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-lg space-y-10">
-      <Helmet><title>Your Profile — L'Or Noir</title></Helmet>
+      <Helmet><title>Your Profile — {settings.siteName}</title></Helmet>
 
       <div className="flex items-center gap-5">
         <div className="relative w-20 h-20 shrink-0">

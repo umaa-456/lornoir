@@ -9,17 +9,17 @@ import mongoose from 'mongoose';
  */
 const siteSettingsSchema = new mongoose.Schema(
   {
-    siteName: { type: String, default: 'Arwa Store', trim: true },
+    siteName: { type: String, default: 'Store', trim: true },
     currency: { type: String, default: 'PKR', trim: true, uppercase: true },
     whatsapp: {
       number: { type: String, default: '+923176346085', trim: true },
       prefilledMessage: {
         type: String,
-        default: 'Assalam-o-Alaikum! ✨\n\nI would like to know more about Arwa Store products.',
+        default: 'Assalam-o-Alaikum! ✨\n\nI would like to know more about your products.',
       },
       businessGreeting: {
         type: String,
-        default: 'Assalam-o-Alaikum! ✨\n\nWelcome to Arwa Store.\n\nThank you for reaching out to us. Your message has been received successfully, and our team will get back to you shortly.\n\nAt Arwa Store, we believe in offering not only premium products, but also a trusted and comfortable shopping experience.\n\nDelivery Across Pakistan\nCash on Delivery Available\nNo Advance Payment Required\nPay Only When Your Parcel Is Delivered\n\nYour trust is our priority, and every order is handled with care.\n\nArwa Store — Quality You Can Trust. Elegance You Can Experience. ✨\n\nThank you for choosing Arwa Store.',
+        default: 'Assalam-o-Alaikum! ✨\n\nWelcome.\n\nThank you for reaching out to us. Your message has been received successfully, and our team will get back to you shortly.\n\nWe believe in offering not only premium products, but also a trusted and comfortable shopping experience.\n\nDelivery Across Pakistan\nCash on Delivery Available\nNo Advance Payment Required\nPay Only When Your Parcel Is Delivered\n\nYour trust is our priority, and every order is handled with care.\n\nQuality You Can Trust. Elegance You Can Experience. ✨\n\nThank you for choosing us.',
       },
     },
     logo: {

@@ -5,8 +5,10 @@ import Reveal from '@/components/ui/Reveal';
 import ProductCard from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Loader';
 import { productsApi } from '@/services/products';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function BestSellers() {
+  const { settings } = useSiteSettings();
   const [products, setProducts] = useState(null);
 
   useEffect(() => {
@@ -19,8 +21,8 @@ export default function BestSellers() {
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Best Sellers — L'Or Noir</title>
-        <meta name="description" content="The most-loved fragrances in the L'Or Noir collection." />
+        <title>Best Sellers — {settings.siteName}</title>
+        <meta name="description" content={`The most-loved products at ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-12 max-w-xl">

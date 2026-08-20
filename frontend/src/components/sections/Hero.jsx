@@ -166,7 +166,7 @@ export default function Hero() {
               viewBox="0 0 200 340"
               className="relative w-48 md:w-64 drop-shadow-gold"
               role="img"
-              aria-label="Silhouette of the signature L'Or Noir bottle"
+              aria-label="Silhouette of the signature store bottle"
             >
               <defs>
                 <linearGradient id="bottleGrad" x1="0" y1="0" x2="1" y2="1">

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import AuthLayout from '@/components/layout/AuthLayout';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Signup() {
+  const { settings } = useSiteSettings();
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +46,7 @@ export default function Signup() {
         </>
       }
     >
-      <Helmet><title>Create Account — L'Or Noir</title></Helmet>
+      <Helmet><title>Create Account — {settings.siteName}</title></Helmet>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <FormField label="Full Name" error={errors.name?.message}>
           <input

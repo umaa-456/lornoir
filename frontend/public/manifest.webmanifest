@@ -1,7 +1,7 @@
 {
-  "name": "Arwa Store",
-  "short_name": "Arwa Store",
-  "description": "Shop Arwa Store online.",
+  "name": "Store",
+  "short_name": "Store",
+  "description": "Shop online.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

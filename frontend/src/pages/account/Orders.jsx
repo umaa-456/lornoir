@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { TextSkeleton } from '@/components/ui/Loader';
 import api from '@/services/api';
 
 export default function Orders() {
+  const { settings } = useSiteSettings();
   const [orders, setOrders] = useState(null);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function Orders() {
 
   return (
     <div>
-      <Helmet><title>Your Orders — L'Or Noir</title></Helmet>
+      <Helmet><title>Your Orders — {settings.siteName}</title></Helmet>
       <p className="text-sm text-gold mb-6">Order History</p>
 
       {!orders && (

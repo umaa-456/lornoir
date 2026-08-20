@@ -2,7 +2,7 @@ import StaticPage from '@/components/layout/StaticPage';
 
 export default function Privacy() {
   return (
-    <StaticPage eyebrow="Legal" title="Privacy Policy" metaDescription="How Arwa Store collects, uses, and protects your data.">
+    <StaticPage eyebrow="Legal" title="Privacy Policy" metaDescription="How we collect, use, and protect your data.">
       <p>Last updated: January 2026</p>
 
       <h2>What we collect</h2>

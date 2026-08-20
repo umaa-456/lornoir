@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import Reveal from '@/components/ui/Reveal';
 import { useAuth } from '@/context/AuthContext';
 
 export default function TrackOrder() {
+  const { settings } = useSiteSettings();
   const { isAuthenticated } = useAuth();
 
   return (
     <div className="pt-32 pb-24 max-w-2xl mx-auto px-6 text-center">
       <Helmet>
-        <title>Track Order — L'Or Noir</title>
-        <meta name="description" content="Track your L'Or Noir order." />
+        <title>Track Order — {settings.siteName}</title>
+        <meta name="description" content={`Track your ${settings.siteName} order.`} />
       </Helmet>
 
       <Reveal>

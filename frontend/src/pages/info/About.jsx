@@ -5,11 +5,11 @@ export default function About() {
     <StaticPage
       eyebrow="Notre Histoire"
       title="A House Built on Restraint"
-      metaDescription="The story of L'Or Noir — a fragrance house founded on rare materials, small batches, and restraint."
+      metaDescription="The story behind our store and its commitment to quality."
       maxWidth="max-w-2xl"
     >
       <p>
-        L'Or Noir began with a disagreement. Our founding perfumer had spent a
+        Our store began with a disagreement. Our founding perfumer had spent a
         decade formulating for larger houses, watching briefs get diluted at
         every stage — batch sizes grew, rare materials got replaced with
         cheaper analogues, and "signature" scents started smelling like
@@ -26,7 +26,7 @@ export default function About() {
         than whoever has stock this quarter.
       </p>
 
-      <h2>What "L'Or Noir" means</h2>
+      <h2>What our name means</h2>
       <p>
         The name is a small contradiction on purpose — black gold. Our
         palette is obsidian and champagne, but the philosophy is the same

@@ -35,8 +35,8 @@ export default function Contact() {
   return (
     <div className="pt-32 pb-24 max-w-6xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Contact — L'Or Noir</title>
-        <meta name="description" content="Get in touch with L'Or Noir." />
+        <title>Contact — {settings.siteName}</title>
+        <meta name="description" content={`Get in touch with ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-xl">

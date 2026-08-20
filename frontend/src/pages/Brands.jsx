@@ -4,8 +4,10 @@ import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import Reveal from '@/components/ui/Reveal';
 import { brandsApi } from '@/services/products';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function Brands() {
+  const { settings } = useSiteSettings();
   const [brands, setBrands] = useState(null);
 
   useEffect(() => {
@@ -15,8 +17,8 @@ export default function Brands() {
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Maisons — L'Or Noir</title>
-        <meta name="description" content="The fragrance houses behind the L'Or Noir collection." />
+        <title>Maisons — {settings.siteName}</title>
+        <meta name="description" content={`The brands available at ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-2xl">

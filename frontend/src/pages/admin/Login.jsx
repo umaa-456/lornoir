@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import AuthLayout from '@/components/layout/AuthLayout';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function AdminLogin() {
+  const { settings } = useSiteSettings();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +38,7 @@ export default function AdminLogin() {
   return (
     <AuthLayout eyebrow="Administration" title="Console Sign In" subtitle="Staff access only">
       <Helmet>
-        <title>Admin Sign In — L'Or Noir</title>
+        <title>Admin Sign In — {settings.siteName}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

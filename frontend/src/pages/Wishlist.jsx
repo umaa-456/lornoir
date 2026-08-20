@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { HiOutlineTrash, HiOutlineShoppingBag } from 'react-icons/hi';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { placeholderSwatch, productImage } from '@/utils/placeholderSwatch';
 
 export default function Wishlist() {
+  const { settings } = useSiteSettings();
   const { items, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 
@@ -17,7 +19,7 @@ export default function Wishlist() {
 
   return (
     <div className="pt-32 pb-24 max-w-5xl mx-auto px-6 md:px-10">
-      <Helmet><title>Your Wishlist — L'Or Noir</title></Helmet>
+      <Helmet><title>Your Wishlist — {settings.siteName}</title></Helmet>
 
       <p className="eyebrow mb-3">Saved for Later</p>
       <h1 className="heading-display text-4xl md:text-5xl mb-12">Wishlist</h1>

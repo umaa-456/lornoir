@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Arwa Store',
-        short_name: 'Arwa Store',
-        description: 'Shop Arwa Store online.',
+        name: 'Store',
+        short_name: 'Store',
+        description: 'Shop online.',
         theme_color: '#123C35',
         background_color: '#F8F5EE',
         display: 'standalone',

@@ -61,7 +61,7 @@ productSchema.pre('validate', async function setSlugAndPrice() {
     const baseSlug = slugify(this.name, { lower: true, strict: true }) || 'product';
     let candidate = baseSlug;
     let suffix = 2;
-    while (await this.constructor.exists({ slug: candidate, isActive: true, _id: { $ne: this._id } })) {
+    while (await this.constructor.exists({ slug: candidate, _id: { $ne: this._id } })) {
       candidate = `${baseSlug}-${suffix++}`;
     }
     this.slug = candidate;

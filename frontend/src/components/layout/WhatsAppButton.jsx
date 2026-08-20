@@ -4,7 +4,7 @@ import { useSiteSettings } from '@/context/SiteSettingsContext';
 export default function WhatsAppButton() {
   const { settings } = useSiteSettings();
   const number = (settings.whatsapp?.number || '+923176346085').replace(/\D/g, '');
-  const message = settings.whatsapp?.prefilledMessage || 'Assalam-o-Alaikum! ✨\n\nI would like to know more about Arwa Store products.';
+  const message = settings.whatsapp?.prefilledMessage || 'Assalam-o-Alaikum! ✨\n\nI would like to know more about your products.';
   const href = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 
   return (

@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { HiOutlineLocationMarker, HiOutlineClock, HiOutlinePhone } from 'react-icons/hi';
 import Reveal from '@/components/ui/Reveal';
 
@@ -24,11 +25,12 @@ const STORES = [
 ];
 
 export default function Stores() {
+  const { settings } = useSiteSettings();
   return (
     <div className="pt-32 pb-24 max-w-6xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Boutiques — L'Or Noir</title>
-        <meta name="description" content="Visit an L'Or Noir boutique." />
+        <title>Boutiques — {settings.siteName}</title>
+        <meta name="description" content={`Visit ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-xl">

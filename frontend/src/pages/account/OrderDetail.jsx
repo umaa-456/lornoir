@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import { HiArrowLeft } from 'react-icons/hi';
 import StatusBadge from '@/components/ui/StatusBadge';
 import api from '@/services/api';
 
 export default function OrderDetail() {
+  const { settings } = useSiteSettings();
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [cancelling, setCancelling] = useState(false);
@@ -36,7 +38,7 @@ export default function OrderDetail() {
 
   return (
     <div className="space-y-6">
-      <Helmet><title>Order {order.orderNumber} — L'Or Noir</title></Helmet>
+      <Helmet><title>Order {order.orderNumber} — {settings.siteName}</title></Helmet>
 
       <Link to="/account/orders" className="flex items-center gap-2 text-sm text-ivory/50 hover:text-gold">
         <HiArrowLeft /> Back to orders

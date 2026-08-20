@@ -5,7 +5,7 @@ export default function Sustainability() {
     <StaticPage
       eyebrow="Our Commitments"
       title="Sustainability"
-      metaDescription="How L'Or Noir sources materials and packages fragrance responsibly."
+      metaDescription="How we source materials and package products responsibly."
       maxWidth="max-w-2xl"
     >
       <p>

@@ -6,15 +6,17 @@ import CategoryShowcase from '@/components/sections/CategoryShowcase';
 import FlashSale from '@/components/sections/FlashSale';
 import Testimonials from '@/components/sections/Testimonials';
 import FAQSection from '@/components/sections/FAQSection';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function Home() {
+  const { settings } = useSiteSettings();
   return (
     <>
       <Helmet>
-        <title>L'Or Noir — Maison de Parfum</title>
+        <title>{settings.siteName}</title>
         <meta
           name="description"
-          content="Rare fragrances, hand-composed in small batches. Discover eau de parfum, oud, and attars from L'Or Noir."
+          content={settings.footerTagline || `Shop ${settings.siteName} online.`}
         />
       </Helmet>
       <Hero />

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import { HiOutlineBell } from 'react-icons/hi';
 import api from '@/services/api';
 
 export default function Notifications() {
+  const { settings } = useSiteSettings();
   const [notifications, setNotifications] = useState(null);
 
   const load = () =>
@@ -29,7 +31,7 @@ export default function Notifications() {
 
   return (
     <div>
-      <Helmet><title>Notifications — L'Or Noir</title></Helmet>
+      <Helmet><title>Notifications — {settings.siteName}</title></Helmet>
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gold">Notifications</p>
         {notifications?.some((n) => !n.isRead) && (

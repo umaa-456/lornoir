@@ -2,7 +2,7 @@ import StaticPage from '@/components/layout/StaticPage';
 
 export default function Terms() {
   return (
-    <StaticPage eyebrow="Legal" title="Terms of Service" metaDescription="Arwa Store terms of service.">
+    <StaticPage eyebrow="Legal" title="Terms of Service" metaDescription="Terms of service for our store.">
       <p>Last updated: January 2026</p>
 
       <h2>Orders and payment</h2>
@@ -31,15 +31,15 @@ export default function Terms() {
 
       <h2>Intellectual property</h2>
       <p>
-        All content on this site — photography, copy, the L'Or Noir name and
-        mark — belongs to L'Or Noir Maison de Parfum and may not be
+        All content on this site — photography, copy, the store name and
+        mark — belongs to the store and may not be
         reproduced without permission.
       </p>
 
       <h2>Governing law</h2>
       <p>
         These terms are governed by the laws of the jurisdiction in which
-        L'Or Noir Maison de Parfum is registered, without regard to
+        the store is registered, without regard to
         conflict-of-law principles.
       </p>
     </StaticPage>

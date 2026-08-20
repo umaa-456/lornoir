@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import AuthLayout from '@/components/layout/AuthLayout';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import api from '@/services/api';
 
 export default function ResetPassword() {
+  const { settings } = useSiteSettings();
   const { token } = useParams();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +46,7 @@ export default function ResetPassword() {
         </Link>
       }
     >
-      <Helmet><title>Reset Password — L'Or Noir</title></Helmet>
+      <Helmet><title>Reset Password — {settings.siteName}</title></Helmet>
       {done ? (
         <p className="text-center text-sm text-ivory/60">Your password has been updated. Redirecting…</p>
       ) : (

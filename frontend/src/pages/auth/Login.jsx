@@ -7,8 +7,10 @@ import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import AuthLayout from '@/components/layout/AuthLayout';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function Login() {
+  const { settings } = useSiteSettings();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,14 +41,14 @@ export default function Login() {
       title="Sign In"
       footer={
         <>
-          New to L'Or Noir?{' '}
+          New to {settings.siteName}?{' '}
           <Link to="/signup" className="text-gold hover:underline">
             Create an account
           </Link>
         </>
       }
     >
-      <Helmet><title>Sign In — L'Or Noir</title></Helmet>
+      <Helmet><title>Sign In — {settings.siteName}</title></Helmet>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <FormField label="Email" error={errors.email?.message}>
           <input

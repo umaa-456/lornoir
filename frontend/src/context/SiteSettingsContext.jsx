@@ -2,11 +2,11 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { siteSettingsApi } from '@/services/siteSettings';
 
 const DEFAULTS = {
-  siteName: 'Arwa Store',
+  siteName: 'Store',
   currency: 'PKR',
   whatsapp: {
     number: '+923176346085',
-    prefilledMessage: 'Assalam-o-Alaikum! ✨\n\nI would like to know more about Arwa Store products.',
+    prefilledMessage: 'Assalam-o-Alaikum! ✨\n\nI would like to know more about your products.',
   },
   logo: { url: null },
   hero: {

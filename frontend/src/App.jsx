@@ -6,12 +6,14 @@ import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { SiteSettingsProvider } from '@/context/SiteSettingsContext';
 import AppRouter from '@/router/AppRouter';
+import SiteMeta from '@/components/seo/SiteMeta';
 
 export default function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
         <SiteSettingsProvider>
+          <SiteMeta />
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>

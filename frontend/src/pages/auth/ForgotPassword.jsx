@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import toast from 'react-hot-toast';
 import AuthLayout from '@/components/layout/AuthLayout';
 import FormField, { inputClass } from '@/components/ui/FormField';
 import api from '@/services/api';
 
 export default function ForgotPassword() {
+  const { settings } = useSiteSettings();
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const {
@@ -39,7 +41,7 @@ export default function ForgotPassword() {
         </Link>
       }
     >
-      <Helmet><title>Forgot Password — L'Or Noir</title></Helmet>
+      <Helmet><title>Forgot Password — {settings.siteName}</title></Helmet>
       {sent ? (
         <p className="text-center text-sm text-ivory/60 leading-relaxed">
           If an account exists for that email, a reset link is on its way.
