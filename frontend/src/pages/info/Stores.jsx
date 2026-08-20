@@ -29,13 +29,13 @@ export default function Stores() {
   return (
     <div className="pt-32 pb-24 max-w-6xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Boutiques — {settings.siteName}</title>
+        <title>Stores — {settings.siteName}</title>
         <meta name="description" content={`Visit ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-xl">
         <p className="eyebrow mb-3">Visit Us</p>
-        <h1 className="heading-display text-4xl md:text-5xl">Boutiques</h1>
+        <h1 className="heading-display text-4xl md:text-5xl">Stores</h1>
       </Reveal>
 
       <div className="grid md:grid-cols-3 gap-6">

@@ -3,7 +3,7 @@ import StaticPage from '@/components/layout/StaticPage';
 export default function About() {
   return (
     <StaticPage
-      eyebrow="Notre Histoire"
+      eyebrow="Our Story"
       title="A House Built on Restraint"
       metaDescription="The story behind our store and its commitment to quality."
       maxWidth="max-w-2xl"
@@ -38,7 +38,7 @@ export default function About() {
       <h2>Where we are now</h2>
       <p>
         Today the house is still small — a handful of perfumers, one atelier,
-        and four collaborating maisons whose work we admire enough to carry
+        and carefully selected brands whose work we admire enough to carry
         alongside our own. We ship to over 40 countries, but we've turned
         down retail partnerships that would have required us to double batch
         sizes. That trade felt obvious.

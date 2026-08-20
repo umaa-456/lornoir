@@ -135,11 +135,11 @@ export default function Hero() {
               <span className="absolute inset-0 bg-gold-pale translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
             </Link>
             <Link
-              to="/shop?category=oud-amber"
+              to="/shop"
               data-cursor-hover
               className="hero-cta text-xs tracking-widest2 uppercase text-ivory/80 border-b border-gold/40 pb-1 hover:text-gold hover:border-gold transition-colors"
             >
-              Explore Your products
+              Explore Products
             </Link>
           </div>
         </div>

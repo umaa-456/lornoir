@@ -29,7 +29,7 @@ export default function ProductShowcase() {
       <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <div>
           <p className="eyebrow mb-3">The Collection</p>
-          <h2 className="heading-display text-4xl md:text-5xl">Compositions worth discovering</h2>
+          <h2 className="heading-display text-4xl md:text-5xl">Products in Our Collection</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           {TABS.map((tab) => (

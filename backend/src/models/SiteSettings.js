@@ -27,20 +27,20 @@ const siteSettingsSchema = new mongoose.Schema(
       publicId: { type: String, default: null },
     },
     hero: {
-      eyebrow: { type: String, default: 'The 2026 Collection — No. VII' },
-      titleLine1: { type: String, default: 'Scent is the' },
-      titleLine2: { type: String, default: 'only memory' },
-      titleLine3: { type: String, default: 'that never fades.' },
+      eyebrow: { type: String, default: 'Curated for Everyday Living' },
+      titleLine1: { type: String, default: 'Everything You Love,' },
+      titleLine2: { type: String, default: 'All in' },
+      titleLine3: { type: String, default: 'One Place.' },
       subtitle: {
         type: String,
         default:
-          "Hand-composed in small batches from rare oud, orris root, and centuries-old distillation houses — worn, not sprayed.",
+          'Discover a carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials — selected to bring quality and elegance to everyday living.',
       },
     },
     footerTagline: {
       type: String,
       default:
-        'Rare fragrances, hand-composed in small batches for those who wear scent as a signature, not an accessory.',
+        'A carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials.',
     },
     contact: {
       email: { type: String, default: 'hello@arwastore.pk' },
@@ -51,11 +51,44 @@ const siteSettingsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const LEGACY_HERO = {
+  eyebrow: 'The 2026 Collection — No. VII',
+  titleLine1: 'Scent is the',
+  titleLine2: 'only memory',
+  titleLine3: 'that never fades.',
+  subtitle: 'Hand-composed in small batches from rare oud, orris root, and centuries-old distillation houses — worn, not sprayed.',
+};
+
+const STORE_HERO = {
+  eyebrow: 'Curated for Everyday Living',
+  titleLine1: 'Everything You Love,',
+  titleLine2: 'All in',
+  titleLine3: 'One Place.',
+  subtitle: 'Discover a carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials — selected to bring quality and elegance to everyday living.',
+};
+
+const LEGACY_FOOTER_TAGLINE = 'Rare fragrances, hand-composed in small batches for those who wear scent as a signature, not an accessory.';
+const STORE_FOOTER_TAGLINE = 'A carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials.';
+
 /** There is only ever one settings document — this fetches it, creating
  * the default one on first use so the site always has something to render. */
 siteSettingsSchema.statics.getSingleton = async function getSingleton() {
   let settings = await this.findOne();
   if (!settings) settings = await this.create({});
+  // Migrate only the previous built-in copy; never overwrite an administrator's
+  // custom content. This lets already-deployed stores adopt the multi-category
+  // storefront wording without a manual database edit.
+  const usesLegacyHero = Object.entries(LEGACY_HERO).every(([key, value]) => settings.hero?.[key] === value);
+  let changed = false;
+  if (usesLegacyHero) {
+    settings.hero = STORE_HERO;
+    changed = true;
+  }
+  if (settings.footerTagline === LEGACY_FOOTER_TAGLINE) {
+    settings.footerTagline = STORE_FOOTER_TAGLINE;
+    changed = true;
+  }
+  if (changed) await settings.save();
   return settings;
 };
 

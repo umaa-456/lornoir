@@ -13,19 +13,23 @@ import {
 } from 'react-icons/hi';
 import { useTheme } from '@/context/ThemeContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { categoriesApi } from '@/services/products';
 
 const NAV_LINKS = [
-  { label: 'Boutique', to: '/shop' },
-  { label: 'Maisons', to: '/brands' },
-  { label: "L'Art de l'Oud", to: '/shop?category=oud-amber' },
-  { label: 'Nouveautés', to: '/new-arrivals' },
-  { label: 'Notre Histoire', to: '/about' },
+  { label: 'Home', to: '/' },
+  { label: 'Shop', to: '/shop' },
+  { label: 'Collections', to: '/shop', hasCategories: true },
+  { label: 'New Arrivals', to: '/new-arrivals' },
+  { label: 'Best Sellers', to: '/best-sellers' },
+  { label: 'About Us', to: '/about' },
+  { label: 'Contact Us', to: '/contact' },
 ];
 
 export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
 
@@ -34,6 +38,10 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    categoriesApi.list().then(setCategories).catch(() => setCategories([]));
   }, []);
 
   return (
@@ -70,27 +78,40 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-9">
           {NAV_LINKS.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              data-cursor-hover
-              className={({ isActive }) =>
-                `relative font-body text-[13px] tracking-widest2 uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
-                  isActive
-                    ? 'text-gold after:w-full'
-                    : 'text-ivory/80 hover:text-gold after:w-0 hover:after:w-full'
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
+            <div key={link.label} className="relative group">
+              <NavLink
+                to={link.to}
+                data-cursor-hover
+                className={({ isActive }) =>
+                  `relative font-body text-[13px] tracking-widest2 uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
+                    isActive
+                      ? 'text-gold after:w-full'
+                      : 'text-ivory/80 hover:text-gold after:w-0 hover:after:w-full'
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+              {link.hasCategories && categories.length > 0 && (
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-1/2 -translate-x-1/2 top-full pt-5 w-56">
+                  <div className="glass border border-gold/20 p-2 shadow-glass">
+                    <Link to="/shop" className="block px-3 py-2 text-xs text-gold hover:bg-gold/10">All Products</Link>
+                    {categories.map((category) => (
+                      <Link key={category._id} to={`/shop?category=${category.slug}`} className="block px-3 py-2 text-xs text-ivory/75 hover:bg-gold/10 hover:text-gold">
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
         {/* Icons */}
         <div className="flex items-center gap-4 md:gap-5 text-xl">
           <button
-            aria-label="Search fragrances"
+            aria-label="Search products"
             className="hover:text-gold transition-colors"
             data-cursor-hover
             onClick={() => setSearchOpen(true)}
@@ -131,7 +152,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           >
             <ul className="flex flex-col divide-y divide-gold/10">
               {NAV_LINKS.map((link) => (
-                <li key={link.to}>
+                <li key={link.label}>
                   <NavLink
                     to={link.to}
                     onClick={() => setMobileOpen(false)}
@@ -139,6 +160,16 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   >
                     {link.label}
                   </NavLink>
+                  {link.hasCategories && categories.map((category) => (
+                    <NavLink
+                      key={category._id}
+                      to={`/shop?category=${category.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-9 py-3 text-xs text-ivory/55 hover:text-gold"
+                    >
+                      {category.name}
+                    </NavLink>
+                  ))}
                 </li>
               ))}
             </ul>

@@ -18,8 +18,8 @@ export default function CategoryShowcase() {
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-10 py-8">
       <Reveal className="mb-10">
-        <p className="eyebrow mb-3">Fragrance Families</p>
-        <h2 className="heading-display text-4xl md:text-5xl max-w-lg">Find the scent that already feels like you.</h2>
+        <p className="eyebrow mb-3">Our Collection</p>
+        <h2 className="heading-display text-4xl md:text-5xl max-w-lg">Everything You Love, All in One Place.</h2>
       </Reveal>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">

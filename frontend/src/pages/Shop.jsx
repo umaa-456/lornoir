@@ -94,7 +94,7 @@ export default function Shop() {
       </Helmet>
 
       <Reveal className="mb-12">
-        <p className="eyebrow mb-3">Boutique</p>
+        <p className="eyebrow mb-3">Shop</p>
         <h1 className="heading-display text-4xl md:text-5xl">The Full Collection</h1>
       </Reveal>
 
@@ -163,7 +163,7 @@ export default function Shop() {
             <div className="text-center py-24">
               {pagination.total === 0 && !search && filters.categories.length === 0 && filters.brands.length === 0 ? (
                 <>
-                  <p className="font-display text-2xl mb-3">No fragrances in the boutique yet.</p>
+                  <p className="font-display text-2xl mb-3">No products available yet.</p>
                   <p className="text-ivory/50 text-sm">
                     Products added from the admin dashboard will appear here automatically.
                   </p>

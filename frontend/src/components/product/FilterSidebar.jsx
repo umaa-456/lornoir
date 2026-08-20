@@ -35,7 +35,7 @@ export default function FilterSidebar({ filters, onChange, onReset, priceBounds,
       </FilterGroup>
 
       <FilterGroup title="Maison">
-        {brands.length === 0 && <p className="text-xs text-ivory/40">No maisons yet</p>}
+        {brands.length === 0 && <p className="text-xs text-ivory/40">No brands yet</p>}
         {brands.map((brand) => (
           <FilterCheckbox
             key={brand.slug}

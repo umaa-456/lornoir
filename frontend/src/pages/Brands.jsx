@@ -11,19 +11,19 @@ export default function Brands() {
   const [brands, setBrands] = useState(null);
 
   useEffect(() => {
-    brandsApi.list().then(setBrands).catch(() => toast.error('Could not load maisons'));
+    brandsApi.list().then(setBrands).catch(() => toast.error('Could not load brands'));
   }, []);
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-10">
       <Helmet>
-        <title>Maisons — {settings.siteName}</title>
+        <title>Brands — {settings.siteName}</title>
         <meta name="description" content={`The brands available at ${settings.siteName}.`} />
       </Helmet>
 
       <Reveal className="mb-14 max-w-2xl">
         <p className="eyebrow mb-3">The Houses</p>
-        <h1 className="heading-display text-4xl md:text-5xl mb-6">Maisons</h1>
+        <h1 className="heading-display text-4xl md:text-5xl mb-6">Brands</h1>
         <p className="text-ivory/60 leading-relaxed">
           Every composition in our collection comes from one of the houses
           below — each with its own philosophy and approach to fragrance.
@@ -34,7 +34,7 @@ export default function Brands() {
 
       {brands?.length === 0 && (
         <div className="glass p-10 text-center text-ivory/50">
-          No maisons have been added yet — they'll appear here once created from the admin dashboard.
+          No brands have been added yet — they'll appear here once created from the admin dashboard.
         </div>
       )}
 

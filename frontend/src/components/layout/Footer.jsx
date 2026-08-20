@@ -1,42 +1,58 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaInstagram, FaTiktok, FaPinterestP, FaFacebookF } from 'react-icons/fa';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { categoriesApi } from '@/services/products';
 
-const COLUMNS = [
+const SHOP_LINKS = [
+  { label: 'All Products', to: '/shop' },
+  { label: 'New Arrivals', to: '/new-arrivals' },
+  { label: 'Best Sellers', to: '/best-sellers' },
+];
+
+const CUSTOMER_CARE_LINKS = [
+  { label: 'Contact Us', to: '/contact' },
+  { label: 'Shipping & Delivery', to: '/shipping' },
+  { label: 'Track Order', to: '/track-order' },
+  { label: 'FAQ', to: '/faq' },
+];
+
+const ABOUT_LINKS = [
+  { label: 'Our Story', to: '/about' },
+  { label: 'Our Collections', to: '/shop' },
+  { label: 'Journal', to: '/journal' },
+];
+
+const STATIC_COLUMNS = [
   {
-    title: 'Boutique',
-    links: [
-      { label: 'All Fragrances', to: '/shop' },
-      { label: 'New Arrivals', to: '/new-arrivals' },
-      { label: 'Best Sellers', to: '/best-sellers' },
-      { label: 'Gift Sets', to: '/shop?category=gift-sets' },
-    ],
+    title: 'Shop',
+    links: SHOP_LINKS,
   },
   {
-    title: 'Maison',
-    links: [
-      { label: 'Our Story', to: '/about' },
-      { label: 'Journal', to: '/journal' },
-      { label: 'Sustainability', to: '/sustainability' },
-      { label: 'Boutiques', to: '/stores' },
-    ],
+    title: 'Customer Care',
+    links: CUSTOMER_CARE_LINKS,
   },
   {
-    title: 'Client Care',
-    links: [
-      { label: 'Contact Us', to: '/contact' },
-      { label: 'Shipping & Returns', to: '/shipping' },
-      { label: 'FAQ', to: '/faq' },
-      { label: 'Track Order', to: '/track-order' },
-    ],
+    title: 'About Store',
+    links: ABOUT_LINKS,
   },
 ];
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const [categories, setCategories] = useState([]);
   const { settings } = useSiteSettings();
+
+  useEffect(() => {
+    categoriesApi.list().then(setCategories).catch(() => setCategories([]));
+  }, []);
+
+  const columns = [
+    STATIC_COLUMNS[0],
+    { title: 'Collections', links: categories.map((category) => ({ label: category.name, to: `/shop?category=${category.slug}` })) },
+    ...STATIC_COLUMNS.slice(1),
+  ];
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -55,9 +71,7 @@ export default function Footer() {
       {/* Newsletter */}
       <div className="max-w-3xl mx-auto text-center px-6 pt-20 pb-16">
         <p className="eyebrow mb-4">The Journal, Delivered</p>
-        <h3 className="heading-display text-3xl md:text-4xl mb-6">
-          Be the first to discover our next composition.
-        </h3>
+        <h3 className="heading-display text-3xl md:text-4xl mb-6">Discover what’s new at {settings.siteName}.</h3>
         <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
           <input
             type="email"
@@ -81,7 +95,7 @@ export default function Footer() {
 
       {/* Link columns */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
-        <div className="col-span-2 md:col-span-2">
+        <div className="col-span-2 md:col-span-1">
           {settings.logo?.url ? (
             <img src={settings.logo.url} alt={settings.siteName} className="h-10 w-auto object-contain mb-4" />
           ) : (
@@ -90,17 +104,18 @@ export default function Footer() {
           <p className="text-sm text-ivory/60 leading-relaxed max-w-xs">
             {settings.footerTagline}
           </p>
-          <div className="flex gap-4 mt-6 text-lg text-ivory/60">
-            <a href="#" aria-label="Instagram" data-cursor-hover className="hover:text-gold transition-colors"><FaInstagram /></a>
-            <a href="#" aria-label="TikTok" data-cursor-hover className="hover:text-gold transition-colors"><FaTiktok /></a>
-            <a href="#" aria-label="Pinterest" data-cursor-hover className="hover:text-gold transition-colors"><FaPinterestP /></a>
-            <a href="#" aria-label="Facebook" data-cursor-hover className="hover:text-gold transition-colors"><FaFacebookF /></a>
+          <p className="eyebrow mt-6 mb-4">Follow Us</p>
+          <div className="flex gap-4 text-lg text-ivory/60" aria-label="Social media">
+            <span aria-label="Instagram" className="hover:text-gold transition-colors"><FaInstagram /></span>
+            <span aria-label="TikTok" className="hover:text-gold transition-colors"><FaTiktok /></span>
+            <span aria-label="Pinterest" className="hover:text-gold transition-colors"><FaPinterestP /></span>
+            <span aria-label="Facebook" className="hover:text-gold transition-colors"><FaFacebookF /></span>
           </div>
         </div>
 
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <div key={col.title}>
-            <p className="eyebrow mb-5">{col.title}</p>
+            <p className="eyebrow mb-5">{col.title === 'About Store' ? `About ${settings.siteName}` : col.title}</p>
             <ul className="space-y-3">
               {col.links.map((link) => (
                 <li key={link.to}>

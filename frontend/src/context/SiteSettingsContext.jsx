@@ -10,15 +10,15 @@ const DEFAULTS = {
   },
   logo: { url: null },
   hero: {
-    eyebrow: 'The 2026 Collection — No. VII',
-    titleLine1: 'Scent is the',
-    titleLine2: 'only memory',
-    titleLine3: 'that never fades.',
+    eyebrow: 'Curated for Everyday Living',
+    titleLine1: 'Everything You Love,',
+    titleLine2: 'All in',
+    titleLine3: 'One Place.',
     subtitle:
-      "Hand-composed in small batches from rare oud, orris root, and centuries-old distillation houses — worn, not sprayed.",
+      'Discover a carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials — selected to bring quality and elegance to everyday living.',
   },
   footerTagline:
-    'Rare fragrances, hand-composed in small batches for those who wear scent as a signature, not an accessory.',
+    'A carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials.',
   contact: { email: 'hello@arwastore.pk', phone: '+92 317 6346085', address: 'Pakistan' },
 };
 

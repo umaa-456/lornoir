@@ -13,8 +13,8 @@ export default function StatsBar() {
   if (!stats) return null;
 
   const cards = [
-    { to: stats.productCount, label: 'Fragrances in the Collection' },
-    { to: stats.brandCount, label: 'Maisons' },
+    { to: stats.productCount, label: 'Products in Our Collection' },
+    { to: stats.brandCount, label: 'Brands' },
     ...(stats.avgRating
       ? [{ display: `${stats.avgRating}/5`, label: 'Average Rating' }]
       : []),

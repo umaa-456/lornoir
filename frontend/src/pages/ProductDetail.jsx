@@ -71,7 +71,7 @@ export default function ProductDetail() {
       <div className="pt-40 pb-24 text-center">
         <p className="font-display text-3xl mb-4">This fragrance couldn't be found.</p>
         <Link to="/shop" className="text-gold underline text-sm">
-          Return to the boutique
+          Return to the shop
         </Link>
       </div>
     );
@@ -294,7 +294,7 @@ export default function ProductDetail() {
 
             <div className="pt-8">
               {activeTab === 'Description' && (
-                <p className="text-ivory/70 leading-relaxed max-w-lg">{product.description}</p>
+                <p className="text-ivory/70 leading-relaxed max-w-lg whitespace-pre-wrap break-words">{product.description}</p>
               )}
               {activeTab === 'Notes' && (
                 <dl className="space-y-4 max-w-lg">

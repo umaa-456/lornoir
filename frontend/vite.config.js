@@ -27,22 +27,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        runtimeCaching: [
-          {
-            // Product/brand/category browsing works offline from cache;
-            // cart, orders, and auth stay network-only (see NetworkOnly
-            // exclusion below) since they must never serve stale data.
-            urlPattern: ({ url, request }) =>
-              request.method === 'GET' &&
-              /\/api\/v1\/(products|brands|categories)/.test(url.pathname),
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'lornoir-catalogue-cache', expiration: { maxEntries: 200, maxAgeSeconds: 3600 } },
-          },
-          {
-            urlPattern: ({ url }) => /\/api\/v1\/(cart|orders|auth|wishlist|addresses|admin|payments)/.test(url.pathname),
-            handler: 'NetworkOnly',
-          },
-        ],
+        // API responses are dynamic and may be authenticated. Do not route
+        // them through Workbox: a failed request without a cache entry becomes
+        // a Workbox "no-response" error instead of an Axios error the app can
+        // handle. Static build assets remain precached.
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
