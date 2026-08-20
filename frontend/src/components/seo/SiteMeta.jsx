@@ -1,7 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 
-const FALLBACK_SITE_NAME = 'Store';
+const FALLBACK_SITE_NAME = 'Arwa Store';
+const STORE_ICON_PATH = '/icons/arwa-icon-512.png';
 
 /** Runtime site-wide metadata sourced from the singleton SiteSettings record. */
 export default function SiteMeta() {
@@ -9,7 +10,7 @@ export default function SiteMeta() {
   const siteName = settings?.siteName?.trim() || FALLBACK_SITE_NAME;
   const description = settings?.footerTagline?.trim() || `Shop ${siteName} online.`;
   const siteUrl = typeof window === 'undefined' ? '' : window.location.origin;
-  const logoUrl = settings?.logo?.url || `${siteUrl}/icons/icon-512.png`;
+  const logoUrl = `${siteUrl}${STORE_ICON_PATH}`;
 
   const organization = {
     '@context': 'https://schema.org',
@@ -48,7 +49,6 @@ export default function SiteMeta() {
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={logoUrl} />
       <meta name="apple-mobile-web-app-title" content={siteName} />
-      {settings?.logo?.url && <link rel="icon" href={settings.logo.url} />}
       <script type="application/ld+json">{JSON.stringify(organization)}</script>
       <script type="application/ld+json">{JSON.stringify(website)}</script>
     </Helmet>

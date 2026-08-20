@@ -8,11 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Store',
-        short_name: 'Store',
-        description: 'Shop online.',
+        name: 'Arwa Store',
+        short_name: 'Arwa Store',
+        description: 'Shop Arwa Store online.',
         theme_color: '#123C35',
         background_color: '#F8F5EE',
         display: 'standalone',
@@ -20,9 +19,9 @@ export default defineConfig({
         scope: '/',
         lang: 'en-PK',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/maskable-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icons/arwa-icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/arwa-icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/arwa-maskable-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

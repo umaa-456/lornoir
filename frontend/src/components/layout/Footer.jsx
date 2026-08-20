@@ -96,11 +96,7 @@ export default function Footer() {
       {/* Link columns */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
         <div className="col-span-2 md:col-span-1">
-          {settings.logo?.url ? (
-            <img src={settings.logo.url} alt={settings.siteName} className="h-10 w-auto object-contain mb-4" />
-          ) : (
-            <p className="font-script text-2xl tracking-widest3 uppercase text-gold-sheen mb-4">{settings.siteName}</p>
-          )}
+          <img src="/icons/arwa-icon-512.png" alt={settings.siteName} className="h-10 w-auto object-contain mb-4" />
           <p className="text-sm text-ivory/60 leading-relaxed max-w-xs">
             {settings.footerTagline}
           </p>

@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { label: 'About Us', to: '/about' },
   { label: 'Contact Us', to: '/contact' },
 ];
+const STORE_LOGO_PATH = '/icons/arwa-icon-512.png';
 
 export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [scrolled, setScrolled] = useState(false);
@@ -54,10 +55,6 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     categoriesApi.list().then(setCategories).catch(() => setCategories([]));
   }, []);
 
-  useEffect(() => {
-    setLogoFailed(false);
-  }, [settings.logo?.url]);
-
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -80,9 +77,9 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           className="flex min-w-0 items-center gap-2 select-none xl:justify-self-start"
           data-cursor-hover
         >
-          {settings.logo?.url && !logoFailed ? (
+          {!logoFailed ? (
             <img
-              src={settings.logo.url}
+              src={STORE_LOGO_PATH}
               alt={settings.siteName}
               className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-10 md:max-w-[11rem] xl:h-11"
               onError={() => setLogoFailed(true)}
