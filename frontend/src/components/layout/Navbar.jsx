@@ -29,6 +29,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [logoFailed, setLogoFailed] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
   const { pathname } = useLocation();
@@ -53,6 +54,10 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     categoriesApi.list().then(setCategories).catch(() => setCategories([]));
   }, []);
 
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [settings.logo?.url]);
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -75,13 +80,12 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           className="flex min-w-0 items-center gap-2 select-none xl:justify-self-start"
           data-cursor-hover
         >
-          {settings.logo?.url ? (
+          {settings.logo?.url && !logoFailed ? (
             <img
               src={settings.logo.url}
               alt={settings.siteName}
-              className={`h-8 max-w-[9rem] object-contain md:h-10 md:max-w-[11rem] xl:h-11 ${
-                isHomeHero ? 'brightness-0 invert drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]' : ''
-              }`}
+              className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-10 md:max-w-[11rem] xl:h-11"
+              onError={() => setLogoFailed(true)}
             />
           ) : (
             <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
