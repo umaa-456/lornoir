@@ -4,45 +4,43 @@ export default function About() {
   return (
     <StaticPage
       eyebrow="Our Story"
-      title="A House Built on Restraint"
-      metaDescription="The story behind our store and its commitment to quality."
+      title="Where Quality Meets Tradition"
+      subtitle="Arwa Store brings together carefully selected products that reflect quality, elegance, and the traditions we value."
+      metaDescription="Discover Arwa Store: thoughtfully selected fashion, fragrances, traditional favourites, and home essentials."
       maxWidth="max-w-2xl"
     >
+      <h2>Built on Trust</h2>
       <p>
-        Our store began with a disagreement. Our founding perfumer had spent a
-        decade formulating for larger houses, watching briefs get diluted at
-        every stage — batch sizes grew, rare materials got replaced with
-        cheaper analogues, and "signature" scents started smelling like
-        variations on the same six accords. In 2019, she left to build
-        something smaller on purpose.
+        Arwa Store was created with a simple vision: to bring quality products
+        together under one trusted name. From fashion and fragrances to natural
+        products, traditional favourites, and home essentials, every collection
+        is selected with care and a focus on value, authenticity, and lasting
+        quality.
       </p>
 
-      <h2>Small batches, deliberately</h2>
+      <h2>More Than a Store</h2>
       <p>
-        Every composition we release is mixed in batches under 500 bottles.
-        Not as a marketing device — it's simply the largest batch size that
-        lets us keep sourcing Cambodian oud, Mysore sandalwood, and orris root
-        the way we want to, from suppliers we've worked with for years rather
-        than whoever has stock this quarter.
+        Our collections are thoughtfully selected to serve different parts of
+        everyday life — from women's and men's fashion to perfumes, natural
+        honey, desi ghee, traditional sweets, home textiles, accessories, and
+        more.
       </p>
 
-      <h2>What our name means</h2>
+      <h2>Our Promise</h2>
       <p>
-        The name is a small contradiction on purpose — black gold. Our
-        palette is obsidian and champagne, but the philosophy is the same
-        tension: dark, resinous materials (oud, leather, incense) built with
-        a light hand, so nothing in the collection reads as heavy-handed or
-        loud for its own sake.
+        We believe shopping should be simple, reliable, and worth coming back
+        to. That's why we focus on product quality, thoughtful selection,
+        honest service, and an experience that puts our customers first.
       </p>
 
-      <h2>Where we are now</h2>
-      <p>
-        Today the house is still small — a handful of perfumers, one atelier,
-        and carefully selected brands whose work we admire enough to carry
-        alongside our own. We ship to over 40 countries, but we've turned
-        down retail partnerships that would have required us to double batch
-        sizes. That trade felt obvious.
-      </p>
+      <h2>Why Choose Arwa Store</h2>
+      <ul>
+        <li>Authentic &amp; carefully selected products</li>
+        <li>Quality you can trust</li>
+        <li>Premium collections for everyday life and special occasions</li>
+        <li>Customer-focused service</li>
+        <li>Delivery across Pakistan</li>
+      </ul>
     </StaticPage>
   );
 }

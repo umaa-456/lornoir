@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   HiOutlineSearch,
@@ -17,7 +17,6 @@ import { categoriesApi } from '@/services/products';
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
-  { label: 'Shop', to: '/shop' },
   { label: 'Collections', to: '/shop', hasCategories: true },
   { label: 'New Arrivals', to: '/new-arrivals' },
   { label: 'Best Sellers', to: '/best-sellers' },
@@ -32,6 +31,16 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [categories, setCategories] = useState([]);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
+  const { pathname } = useLocation();
+  const isHomeHero = pathname === '/' && !scrolled;
+  const isCollectionsRoute = pathname === '/shop' || pathname.startsWith('/product/');
+
+  const navLinkClass = (isActive) =>
+    `relative font-body text-[13px] tracking-widest2 uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
+      isActive
+        ? 'text-gold after:w-full'
+        : `${isHomeHero ? 'text-white/90 hover:text-gold' : 'text-ivory/80 hover:text-gold'} after:w-0 hover:after:w-full`
+    }`;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -47,13 +56,13 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'glass py-3 shadow-glass' : 'bg-transparent py-6'
+        isHomeHero ? 'bg-transparent py-6 text-white' : 'glass py-3 shadow-glass text-ivory'
       }`}
     >
-      <div className="mx-auto max-w-7xl px-5 md:px-8 flex items-center justify-between">
+      <div className="mx-auto max-w-7xl px-5 md:px-8 flex items-center justify-between gap-3 xl:grid xl:grid-cols-[minmax(9rem,1fr)_auto_minmax(10rem,1fr)] xl:gap-6">
         {/* Mobile menu toggle */}
         <button
-          className="lg:hidden text-2xl text-gold"
+          className="xl:hidden shrink-0 text-2xl text-gold"
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setMobileOpen((v) => !v)}
         >
@@ -63,11 +72,17 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         {/* Wordmark */}
         <Link
           to="/"
-          className="flex items-center gap-2 select-none"
+          className="flex min-w-0 items-center gap-2 select-none xl:justify-self-start"
           data-cursor-hover
         >
           {settings.logo?.url ? (
-            <img src={settings.logo.url} alt={settings.siteName} className="h-9 md:h-11 w-auto object-contain" />
+            <img
+              src={settings.logo.url}
+              alt={settings.siteName}
+              className={`h-8 max-w-[9rem] object-contain md:h-10 md:max-w-[11rem] xl:h-11 ${
+                isHomeHero ? 'brightness-0 invert drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]' : ''
+              }`}
+            />
           ) : (
             <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
               {settings.siteName}
@@ -76,19 +91,14 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-9">
+        <nav className="hidden xl:flex items-center justify-self-center gap-6 2xl:gap-8">
           {NAV_LINKS.map((link) => (
             <div key={link.label} className="relative group">
               <NavLink
                 to={link.to}
                 data-cursor-hover
-                className={({ isActive }) =>
-                  `relative font-body text-[13px] tracking-widest2 uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
-                    isActive
-                      ? 'text-gold after:w-full'
-                      : 'text-ivory/80 hover:text-gold after:w-0 hover:after:w-full'
-                  }`
-                }
+                end={link.to === '/'}
+                className={({ isActive }) => navLinkClass(link.hasCategories ? isCollectionsRoute : isActive)}
               >
                 {link.label}
               </NavLink>
@@ -109,7 +119,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </nav>
 
         {/* Icons */}
-        <div className="flex items-center gap-4 md:gap-5 text-xl">
+        <div className="flex shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 md:gap-5 xl:justify-self-end">
           <button
             aria-label="Search products"
             className="hover:text-gold transition-colors"
@@ -148,7 +158,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:hidden overflow-hidden glass mt-3 mx-4 rounded-sm"
+            className="xl:hidden overflow-hidden glass mt-3 mx-4 rounded-sm"
           >
             <ul className="flex flex-col divide-y divide-gold/10">
               {NAV_LINKS.map((link) => (
@@ -156,7 +166,12 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   <NavLink
                     to={link.to}
                     onClick={() => setMobileOpen(false)}
-                    className="block px-6 py-4 text-sm tracking-widest2 uppercase text-ivory/85 hover:text-gold"
+                    end={link.to === '/'}
+                    className={({ isActive }) =>
+                      `block px-6 py-4 text-sm tracking-widest2 uppercase hover:text-gold ${
+                        (link.hasCategories ? isCollectionsRoute : isActive) ? 'text-gold' : 'text-ivory/85'
+                      }`
+                    }
                   >
                     {link.label}
                   </NavLink>
