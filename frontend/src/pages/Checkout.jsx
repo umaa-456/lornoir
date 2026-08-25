@@ -14,7 +14,7 @@ import { formatCurrency } from '@/utils/currency';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-const STEPS = ['Address', 'Payment', 'Review'];
+const STEPS = ['Address', 'Subscription & Rating', 'Payment', 'Review'];
 
 export default function Checkout() {
   const { items, subtotal, discount, shipping, total, coupon, clearCart, revalidateCart } = useCart();
@@ -25,6 +25,9 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [clientSecret, setClientSecret] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [preparingPayment, setPreparingPayment] = useState(false);
+  const [subscribe, setSubscribe] = useState(null);
+  const [checkoutRating, setCheckoutRating] = useState(0);
 
   const {
     register,
@@ -33,7 +36,7 @@ export default function Checkout() {
   } = useForm();
 
   useEffect(() => {
-    if (paymentMethod === 'stripe' && step === 1 && !clientSecret) {
+    if (paymentMethod === 'stripe' && step === 2 && !clientSecret) {
       api
         .post('/payments/create-intent')
         .then(({ data }) => setClientSecret(data.clientSecret))
@@ -46,6 +49,30 @@ export default function Checkout() {
   const submitAddress = (data) => {
     setAddress(data);
     setStep(1);
+  };
+
+  const continueToPayment = async () => {
+    if (subscribe === null || !checkoutRating) return;
+    setPreparingPayment(true);
+    try {
+      const unavailable = await revalidateCart();
+      if (unavailable.length) {
+        toast.error('This product is currently out of stock. Please review your bag.');
+        navigate('/cart');
+        return;
+      }
+      // Card payment intents are calculated from the server cart. Synchronise
+      // it before opening the payment step so shipping and totals are correct.
+      await api.delete('/cart');
+      for (const item of items) {
+        await api.post('/cart/items', { productId: item.productId, sku: item.sku, qty: item.qty });
+      }
+      setStep(2);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not prepare your checkout');
+    } finally {
+      setPreparingPayment(false);
+    }
   };
 
   const placeOrder = async (stripePaymentIntentId = null) => {
@@ -68,6 +95,8 @@ export default function Checkout() {
         shippingAddressId: addressRes.address._id,
         paymentMethod,
         stripePaymentIntentId,
+        subscribe,
+        checkoutRating,
       });
       clearCart();
       navigate('/order-confirmed', { state: { order: orderRes.order } });
@@ -136,12 +165,24 @@ export default function Checkout() {
                 type="submit"
                 className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold"
               >
-                Continue to Payment
+                Continue
               </button>
             </form>
           )}
 
           {step === 1 && (
+            <div className="max-w-lg space-y-6">
+              <div className="glass p-6 space-y-4">
+                <p className="font-display text-2xl">Stay in the Arwa circle</p>
+                <p className="text-sm text-ivory/60">Subscribe for new arrivals, exclusive offers and special discounts.</p>
+                <div className="flex gap-3"><button onClick={() => setSubscribe(true)} className={`px-4 py-2 border text-xs uppercase ${subscribe === true ? 'bg-gold text-obsidian border-gold' : 'border-gold/25'}`}>Subscribe</button><button onClick={() => setSubscribe(false)} className={`px-4 py-2 border text-xs uppercase ${subscribe === false ? 'bg-gold text-obsidian border-gold' : 'border-gold/25'}`}>No thanks</button></div>
+              </div>
+              <div className="glass p-6"><p className="font-display text-2xl">Rate your selection</p><p className="text-sm text-ivory/60 mt-2">Please give this order&apos;s products a quick rating before payment.</p><div className="flex gap-2 mt-4" aria-label="Product rating">{[1,2,3,4,5].map((rating) => <button key={rating} onClick={() => setCheckoutRating(rating)} className={`text-3xl ${rating <= checkoutRating ? 'text-gold' : 'text-ivory/25'}`} aria-label={`${rating} stars`}>★</button>)}</div></div>
+              <button onClick={continueToPayment} disabled={subscribe === null || !checkoutRating || preparingPayment} className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-40">{preparingPayment ? 'Preparing…' : 'Continue to Payment'}</button>
+            </div>
+          )}
+
+          {step === 2 && (
             <div className="max-w-lg space-y-6">
               <div className="flex gap-3">
                 <PaymentOption
@@ -158,7 +199,7 @@ export default function Checkout() {
 
               {paymentMethod === 'cod' && (
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(3)}
                   className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold"
                 >
                   Continue to Review
@@ -176,7 +217,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div className="max-w-lg space-y-6">
               <div className="glass p-5">
                 <p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-2">Deliver To</p>

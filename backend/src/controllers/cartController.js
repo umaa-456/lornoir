@@ -3,25 +3,12 @@ import Product from '../models/Product.js';
 import Coupon from '../models/Coupon.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { calculateCartTotals } from '../utils/totals.js';
 
 async function getOrCreateCart(userId) {
   let cart = await Cart.findOne({ user: userId });
   if (!cart) cart = await Cart.create({ user: userId, items: [] });
   return cart;
-}
-
-function computeTotals(cart) {
-  const subtotal = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  let discount = 0;
-  if (cart.coupon?.code) {
-    discount =
-      cart.coupon.type === 'percent'
-        ? subtotal * (cart.coupon.value / 100)
-        : Math.min(cart.coupon.value, subtotal);
-  }
-  const shipping = subtotal - discount > 150 || cart.items.length === 0 ? 0 : 12;
-  const total = Math.max(0, subtotal - discount + shipping);
-  return { subtotal, discount, shipping, total };
 }
 
 function assertPurchasable(product) {
@@ -31,7 +18,7 @@ function assertPurchasable(product) {
 
 export const getCart = asyncHandler(async (req, res) => {
   const cart = await getOrCreateCart(req.user._id);
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const addToCart = asyncHandler(async (req, res) => {
@@ -62,7 +49,7 @@ export const addToCart = asyncHandler(async (req, res) => {
   }
 
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const updateCartItem = asyncHandler(async (req, res) => {
@@ -82,14 +69,14 @@ export const updateCartItem = asyncHandler(async (req, res) => {
 
   item.qty = Number(qty);
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const removeCartItem = asyncHandler(async (req, res) => {
   const cart = await getOrCreateCart(req.user._id);
   cart.items = cart.items.filter((i) => i.sku !== req.params.sku);
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const clearCart = asyncHandler(async (req, res) => {
@@ -97,7 +84,7 @@ export const clearCart = asyncHandler(async (req, res) => {
   cart.items = [];
   cart.coupon = { code: null, type: null, value: null };
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const applyCoupon = asyncHandler(async (req, res) => {
@@ -113,12 +100,12 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 
   cart.coupon = { code: coupon.code, type: coupon.type, value: coupon.value };
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });
 
 export const removeCoupon = asyncHandler(async (req, res) => {
   const cart = await getOrCreateCart(req.user._id);
   cart.coupon = { code: null, type: null, value: null };
   await cart.save();
-  res.status(200).json({ success: true, cart, totals: computeTotals(cart) });
+  res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });
 });

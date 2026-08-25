@@ -3,22 +3,14 @@ import Order from '../models/Order.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { getStripe } from '../services/stripeService.js';
+import { calculateCartTotals } from '../utils/totals.js';
 
 /** Creates a PaymentIntent sized to the caller's current cart total. */
 export const createPaymentIntent = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart || cart.items.length === 0) throw ApiError.badRequest('Your cart is empty');
 
-  const subtotal = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  let discount = 0;
-  if (cart.coupon?.code) {
-    discount =
-      cart.coupon.type === 'percent'
-        ? subtotal * (cart.coupon.value / 100)
-        : Math.min(cart.coupon.value, subtotal);
-  }
-  const shipping = subtotal - discount > 150 ? 0 : 12;
-  const total = Math.max(0, subtotal - discount + shipping);
+  const { total } = await calculateCartTotals(cart);
 
   const paymentIntent = await getStripe().paymentIntents.create({
     amount: Math.round(total * 100), // Stripe expects the smallest currency unit

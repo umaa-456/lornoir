@@ -9,6 +9,8 @@ import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendOrderConfirmationEmail } from '../utils/email.js';
 import { getStripe } from '../services/stripeService.js';
+import User from '../models/User.js';
+import { calculateCartTotals } from '../utils/totals.js';
 
 function generateOrderNumber() {
   const stamp = Date.now().toString(36).toUpperCase();
@@ -30,7 +32,7 @@ function snapshotAddress(addr) {
 }
 
 export const createOrder = asyncHandler(async (req, res) => {
-  const { shippingAddressId, billingAddressId, paymentMethod, stripePaymentIntentId } = req.body;
+  const { shippingAddressId, billingAddressId, paymentMethod, stripePaymentIntentId, checkoutRating, subscribe } = req.body;
 
   if (paymentMethod === 'stripe' && !stripePaymentIntentId) {
     throw ApiError.badRequest('Missing payment confirmation for card payment');
@@ -80,17 +82,8 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('One or more products are no longer available. Please review your cart and try again.');
   }
 
-  const subtotal = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  let discount = 0;
-  if (cart.coupon?.code) {
-    discount =
-      cart.coupon.type === 'percent'
-        ? subtotal * (cart.coupon.value / 100)
-        : Math.min(cart.coupon.value, subtotal);
-    await Coupon.updateOne({ code: cart.coupon.code }, { $inc: { usedCount: 1 } });
-  }
-  const shippingCost = subtotal - discount > 150 ? 0 : 12;
-  const total = Math.max(0, subtotal - discount + shippingCost);
+  const { subtotal, discount, shipping: shippingCost, total } = await calculateCartTotals(cart);
+  if (cart.coupon?.code) await Coupon.updateOne({ code: cart.coupon.code }, { $inc: { usedCount: 1 } });
 
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
@@ -106,7 +99,13 @@ export const createOrder = asyncHandler(async (req, res) => {
     shippingCost,
     total,
     couponCode: cart.coupon?.code || null,
+    checkoutRating: Number(checkoutRating),
+    subscribedAtCheckout: Boolean(subscribe),
   });
+
+  if (subscribe && !req.user.marketingSubscribed) {
+    await User.updateOne({ _id: req.user._id }, { marketingSubscribed: true });
+  }
 
   cart.items = [];
   cart.coupon = { code: null, type: null, value: null };
@@ -119,6 +118,12 @@ export const createOrder = asyncHandler(async (req, res) => {
     message: `Your order #${order.orderNumber} has been received and is being prepared.`,
     link: `/account/orders/${order._id}`,
   });
+  const admins = await User.find({ role: { $in: ['admin', 'employee'] }, isActive: true }).select('_id');
+  if (admins.length) await Notification.insertMany(admins.map((admin) => ({
+    user: admin._id, type: 'order', title: 'New Order Received',
+    message: `#${order.orderNumber} from ${req.user.name}: ${order.items.length} item(s), total ${order.total}.`,
+    link: `/admin/orders/${order._id}`,
+  })));
 
   try {
     await sendOrderConfirmationEmail(req.user.email, order);
@@ -195,17 +200,15 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
 
-  order.status = status;
+  const statusChanged = status && status !== order.status;
+  if (statusChanged) order.status = status;
   if (trackingNumber) order.trackingNumber = trackingNumber;
   if (note) order.statusHistory.push({ status, note, changedAt: new Date() });
   await order.save();
 
-  await Notification.create({
-    user: order.user,
-    type: 'order',
-    title: 'Order status updated',
-    message: `Order #${order.orderNumber} is now ${status}.`,
-    link: `/account/orders/${order._id}`,
+  if (statusChanged) await Notification.create({
+    user: order.user, type: 'order', title: 'Order status updated',
+    message: `Your Arwa Store order #${order.orderNumber} is now ${status}.`, link: `/account/orders/${order._id}`,
   });
 
   res.status(200).json({ success: true, order });

@@ -6,14 +6,14 @@ import { ProductCardSkeleton } from '@/components/ui/Loader';
 import { productsApi } from '@/services/products';
 
 const TABS = [
-  { key: 'featured', label: 'Featured' },
   { key: 'trending', label: 'Trending' },
+  { key: 'featured', label: 'Featured' },
   { key: 'new', label: 'New Arrivals' },
   { key: 'bestseller', label: 'Best Sellers' },
 ];
 
 export default function ProductShowcase() {
-  const [active, setActive] = useState('featured');
+  const [active, setActive] = useState('trending');
   const [products, setProducts] = useState(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function ProductShowcase() {
       <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <div>
           <p className="eyebrow mb-3">The Collection</p>
-          <h2 className="heading-display text-4xl md:text-5xl">Products in Our Collection</h2>
+          <Link to="/shop" className="heading-display text-4xl md:text-5xl hover:text-gold transition-colors" aria-label="View all products in our collection">Products in Our Collection</Link>
         </div>
         <div className="flex flex-wrap gap-2">
           {TABS.map((tab) => (

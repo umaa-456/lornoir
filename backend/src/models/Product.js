@@ -66,6 +66,30 @@ productSchema.pre('validate', async function setSlugAndPrice() {
     }
     this.slug = candidate;
   }
+  // A SKU still identifies a purchasable variant, but duplicating a product
+  // should not force an administrator to invent a new listing name. Preserve
+  // a supplied SKU where possible and suffix only conflicting variants.
+  if (this.variants?.length) {
+    // The database's unique index covers every product, but it cannot see a
+    // second duplicate SKU in the document currently being created. Track the
+    // candidates chosen in this request as well, so duplicated listings and
+    // multiple variants never fail with a raw E11000 error.
+    const usedInDocument = new Set();
+    for (const variant of this.variants) {
+      const baseSku = String(variant.sku || '').trim();
+      if (!baseSku) continue;
+      let candidate = baseSku;
+      let suffix = 2;
+      while (
+        usedInDocument.has(candidate) ||
+        await this.constructor.exists({ _id: { $ne: this._id }, 'variants.sku': candidate })
+      ) {
+        candidate = `${baseSku}-${suffix++}`;
+      }
+      usedInDocument.add(candidate);
+      variant.sku = candidate;
+    }
+  }
   if (this.variants?.length) {
     this.basePrice = Math.min(...this.variants.map((v) => v.price));
   }
@@ -75,7 +99,10 @@ productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ category: 1, brand: 1, basePrice: 1 });
 
 productSchema.virtual('totalStock').get(function totalStock() {
-  return this.variants.reduce((sum, v) => sum + v.stock, 0);
+  // Product projections used by reviews and order history may deliberately
+  // omit variants. Virtuals are still evaluated during serialization, so a
+  // missing projection must mean "stock not selected", not a 500 response.
+  return (this.variants || []).reduce((sum, v) => sum + v.stock, 0);
 });
 
 productSchema.set('toJSON', { virtuals: true });

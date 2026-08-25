@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { body } from 'express-validator';
+import * as sales from '../controllers/saleController.js';
+import { protect, restrictTo } from '../middlewares/auth.js';
+import validate from '../middlewares/validate.js';
+const router = Router();
+router.get('/active', sales.getActiveSale);
+router.get('/', protect, restrictTo('admin', 'employee'), sales.listSales);
+const rules = [body('title').trim().notEmpty(), body('discount').trim().notEmpty(), body('startsAt').isISO8601(), body('endsAt').isISO8601()];
+router.post('/', protect, restrictTo('admin'), rules, validate, sales.createSale);
+router.patch('/:id', protect, restrictTo('admin'), rules.map((rule) => rule.optional()), validate, sales.updateSale);
+router.delete('/:id', protect, restrictTo('admin'), sales.deleteSale);
+export default router;

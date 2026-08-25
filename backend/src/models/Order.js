@@ -60,6 +60,8 @@ const orderSchema = new mongoose.Schema(
     statusHistory: { type: [statusHistorySchema], default: [] },
     trackingNumber: { type: String, default: null },
     cancelReason: { type: String, default: null },
+    checkoutRating: { type: Number, min: 1, max: 5, default: null },
+    subscribedAtCheckout: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

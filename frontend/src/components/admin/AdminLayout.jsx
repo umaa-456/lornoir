@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,6 +13,8 @@ import {
   HiOutlineExclamationCircle,
   HiOutlinePhotograph,
   HiOutlineCog,
+  HiOutlineLightningBolt,
+  HiOutlineBell,
   HiOutlineMenu,
   HiOutlineX,
   HiOutlineLogout,
@@ -20,6 +22,7 @@ import {
 } from 'react-icons/hi';
 import { useAuth } from '@/context/AuthContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import api from '@/services/api';
 
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: HiOutlineViewGrid, end: true },
@@ -30,6 +33,7 @@ const NAV = [
   { to: '/admin/customers', label: 'Customers & Staff', icon: HiOutlineUsers },
   { to: '/admin/reviews', label: 'Reviews', icon: HiOutlineStar },
   { to: '/admin/coupons', label: 'Coupons', icon: HiOutlineTicket },
+  { to: '/admin/sales', label: 'Sales', icon: HiOutlineLightningBolt },
   { to: '/admin/inventory', label: 'Inventory', icon: HiOutlineExclamationCircle },
   { to: '/admin/branding', label: 'Branding & Content', icon: HiOutlinePhotograph },
   { to: '/admin/settings', label: 'Settings', icon: HiOutlineCog },
@@ -39,6 +43,11 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const { settings } = useSiteSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    const load = () => api.get('/notifications').then(({ data }) => setUnread(data.unreadCount || 0)).catch(() => {});
+    load(); const timer = window.setInterval(load, 30000); return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-obsidian text-ivory flex">
@@ -105,6 +114,7 @@ export default function AdminLayout() {
           </button>
           <p className="hidden lg:block text-sm text-ivory/50">Administration Console</p>
           <div className="flex items-center gap-3">
+            <Link to="/admin/notifications" className="relative text-xl text-gold" aria-label="Admin notifications"><HiOutlineBell />{unread > 0 && <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 rounded-full bg-ember text-white text-[9px] leading-4 text-center">{unread > 9 ? '9+' : unread}</span>}</Link>
             <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-sm font-semibold">
               {user?.name?.[0]?.toUpperCase() || 'A'}
             </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function AdminSettings() {
   const { user, updateUser } = useAuth();
@@ -9,6 +10,9 @@ export default function AdminSettings() {
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const { settings, refresh } = useSiteSettings();
+  const [shipping, setShipping] = useState(settings.shipping || { freeShipping: true, fixedCharge: 0 });
+  const saveShipping = async (e) => { e.preventDefault(); try { await api.patch('/site-settings', { shipping: { ...shipping, fixedCharge: Number(shipping.fixedCharge || 0) } }); refresh(); toast.success('Shipping settings saved'); } catch { toast.error('Could not save shipping settings'); } };
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -73,6 +77,13 @@ export default function AdminSettings() {
         <button disabled={savingProfile} className="px-6 py-2.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-50">
           {savingProfile ? 'Saving…' : 'Save Profile'}
         </button>
+      </form>
+
+      <form onSubmit={saveShipping} className="glass p-6 space-y-4">
+        <p className="text-sm text-gold">Shipping</p>
+        <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={shipping.freeShipping} onChange={(e) => setShipping((s) => ({ ...s, freeShipping: e.target.checked }))} /> Enable free shipping</label>
+        <div><label className="block text-[11px] tracking-widest2 uppercase text-ivory/50 mb-2">Fixed shipping charge</label><input type="number" min="0" disabled={shipping.freeShipping} value={shipping.fixedCharge} onChange={(e) => setShipping((s) => ({ ...s, fixedCharge: e.target.value }))} className="w-full bg-transparent border border-gold/25 px-4 py-2.5 text-sm disabled:opacity-40" /></div>
+        <button className="px-6 py-2.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold">Save Shipping</button>
       </form>
 
       <form onSubmit={savePassword} className="glass p-6 space-y-4">

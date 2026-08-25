@@ -54,6 +54,8 @@ const AdminCoupons = lazy(() => import('@/pages/admin/Coupons'));
 const AdminInventory = lazy(() => import('@/pages/admin/Inventory'));
 const AdminBranding = lazy(() => import('@/pages/admin/Branding'));
 const AdminSettings = lazy(() => import('@/pages/admin/Settings'));
+const AdminSales = lazy(() => import('@/pages/admin/Sales'));
+const AdminNotifications = lazy(() => import('@/pages/admin/Notifications'));
 
 function withSuspense(Component) {
   return (
@@ -131,6 +133,8 @@ const router = createBrowserRouter([
           { path: 'customers', element: withSuspense(AdminCustomers) },
           { path: 'reviews', element: withSuspense(AdminReviews) },
           { path: 'coupons', element: withSuspense(AdminCoupons) },
+          { path: 'sales', element: withSuspense(AdminSales) },
+          { path: 'notifications', element: withSuspense(AdminNotifications) },
           { path: 'inventory', element: withSuspense(AdminInventory) },
           { path: 'branding', element: withSuspense(AdminBranding) },
           { path: 'settings', element: withSuspense(AdminSettings) },

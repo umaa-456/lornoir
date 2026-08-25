@@ -38,6 +38,12 @@ export const adminApi = {
   updateOrderStatus: (id, payload) => api.patch(`/orders/${id}/status`, payload).then((r) => r.data),
   refundOrder: (id, payload) => api.post(`/orders/${id}/refund`, payload).then((r) => r.data),
 
+  // Sales
+  listSales: () => api.get('/sales').then((r) => r.data),
+  createSale: (payload) => api.post('/sales', payload).then((r) => r.data),
+  updateSale: (id, payload) => api.patch(`/sales/${id}`, payload).then((r) => r.data),
+  deleteSale: (id) => api.delete(`/sales/${id}`).then((r) => r.data),
+
   // Customers / employees
   listCustomers: (params) => api.get('/admin/customers', { params }).then((r) => r.data),
   createStaffMember: (payload) => api.post('/admin/customers/staff', payload).then((r) => r.data),

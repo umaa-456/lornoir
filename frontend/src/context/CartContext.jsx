@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { productsApi } from '@/services/products';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'lornoir_cart';
@@ -15,6 +16,7 @@ function readStorage() {
 }
 
 export function CartProvider({ children }) {
+  const { settings } = useSiteSettings();
   const [items, setItems] = useState(readStorage);
   const [coupon, setCoupon] = useState(null);
 
@@ -106,7 +108,7 @@ export function CartProvider({ children }) {
     return Math.min(coupon.value, subtotal);
   }, [coupon, subtotal]);
 
-  const shipping = subtotal - discount > 150 || items.length === 0 ? 0 : 12;
+  const shipping = items.length === 0 || settings.shipping?.freeShipping ? 0 : Number(settings.shipping?.fixedCharge || 0);
   const tax = Math.max(0, (subtotal - discount) * 0.0);
   const total = Math.max(0, subtotal - discount + shipping + tax);
   const itemCount = items.reduce((sum, i) => sum + i.qty, 0);

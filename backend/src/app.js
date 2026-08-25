@@ -21,6 +21,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import siteSettingsRoutes from './routes/siteSettingsRoutes.js';
+import saleRoutes from './routes/saleRoutes.js';
 import { getSitemap } from './controllers/sitemapController.js';
 import { stripeWebhook } from './controllers/paymentController.js';
 import errorHandler from './middlewares/errorHandler.js';
@@ -80,6 +81,7 @@ app.use(`${API_PREFIX}/admin`, adminRoutes);
 app.use(`${API_PREFIX}/payments`, paymentRoutes);
 app.use(`${API_PREFIX}/contact`, contactRoutes);
 app.use(`${API_PREFIX}/site-settings`, siteSettingsRoutes);
+app.use(`${API_PREFIX}/sales`, saleRoutes);
 
 // ---------- 404 handler ----------
 app.use((req, res, next) => {

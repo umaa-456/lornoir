@@ -18,13 +18,13 @@ export const listProductReviews = asyncHandler(async (req, res) => {
 
 /** Top-rated reviews across the whole catalogue, for homepage testimonials. */
 export const getFeaturedReviews = asyncHandler(async (req, res) => {
+  // `lean` keeps legacy/deleted references from triggering document hydration
+  // problems; null populated refs are valid historical data and are removed.
   const reviews = await Review.find({ rating: { $gte: 4 } })
-    .populate('user', 'name')
-    .populate('product', 'name slug')
-    .sort('-rating -helpfulCount -createdAt')
-    .limit(8);
+    .populate('user', 'name').populate('product', 'name slug')
+    .sort({ rating: -1, helpfulCount: -1, createdAt: -1 }).limit(8).lean();
 
-  res.status(200).json({ success: true, reviews });
+  res.status(200).json({ success: true, reviews: reviews.filter((review) => review.user && review.product) });
 });
 
 export const createReview = asyncHandler(async (req, res) => {

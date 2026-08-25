@@ -7,6 +7,7 @@ import Reveal from '@/components/ui/Reveal';
 import ProductCard from '@/components/product/ProductCard';
 import useCountdown from '@/hooks/useCountdown';
 import { productsApi } from '@/services/products';
+import api from '@/services/api';
 
 function TimeBlock({ value, label }) {
   return (
@@ -20,16 +21,13 @@ function TimeBlock({ value, label }) {
 }
 
 export default function FlashSale() {
-  const target = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 2);
-    d.setHours(23, 59, 59, 0);
-    return d;
-  }, []);
+  const [sale, setSale] = useState(undefined);
+  const target = useMemo(() => sale ? new Date(sale.endsAt) : new Date(), [sale]);
   const { days, hours, minutes, seconds, done } = useCountdown(target);
   const [saleProducts, setSaleProducts] = useState(null);
 
   useEffect(() => {
+    api.get('/sales/active').then(({ data }) => setSale(data.sale)).catch(() => setSale(null));
     productsApi
       .list({ tag: 'flash-sale', limit: 12 })
       .then((data) => setSaleProducts(Array.isArray(data?.products) ? data.products : []))
@@ -40,7 +38,7 @@ export default function FlashSale() {
   // rather than showing an empty countdown with no products under it.
   const products = Array.isArray(saleProducts) ? saleProducts : [];
 
-  if (saleProducts !== null && products.length === 0) return null;
+  if (!sale || (saleProducts !== null && products.length === 0)) return null;
 
   return (
     <section className="luxury-dark relative py-24 border-y border-gold/20 overflow-hidden">
@@ -49,11 +47,11 @@ export default function FlashSale() {
         <Reveal className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-12">
           <div>
             <p className="eyebrow mb-3">Limited Time</p>
-            <h2 className="heading-display text-4xl md:text-5xl">The Midnight Sale</h2>
+            <h2 className="heading-display text-4xl md:text-5xl">{sale.title}</h2>
             <p className="text-ivory/60 mt-3 max-w-md">
-              A small selection, discounted for a short window only. Once the
-              clock runs out, prices return.
+              {sale.description || 'A limited-time selection curated especially for you.'}
             </p>
+            <p className="text-gold text-xs tracking-widest2 uppercase mt-4">{sale.occasion && `${sale.occasion} · `}{sale.discount}</p>
           </div>
 
           {!done ? (

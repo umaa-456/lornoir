@@ -88,7 +88,7 @@ export default function AdminOrderDetail() {
           <tbody>
             {order.items.map((item) => (
               <tr key={item.sku} className="border-b border-gold/5 last:border-0">
-                <td className="px-6 py-3">{item.name} <span className="text-ivory/40">({item.variantLabel})</span></td>
+                <td className="px-6 py-3"><div className="flex items-center gap-3">{item.image ? <img src={item.image} alt={item.name} className="w-12 h-12 object-cover border border-gold/20" /> : <div className="w-12 h-12 bg-obsidian-light border border-gold/20" />}<span>{item.name} {item.variantLabel && <span className="text-ivory/40">({item.variantLabel})</span>}<span className="block text-xs text-ivory/40">{item.sku}</span></span></div></td>
                 <td className="px-6 py-3">{item.qty}</td>
                 <td className="px-6 py-3 text-right">${(item.price * item.qty).toFixed(2)}</td>
               </tr>

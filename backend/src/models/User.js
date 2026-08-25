@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     passwordChangedAt: { type: Date, select: false },
     provider: { type: String, enum: ['local', 'google', 'facebook'], default: 'local' },
     isActive: { type: Boolean, default: true },
+    marketingSubscribed: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
