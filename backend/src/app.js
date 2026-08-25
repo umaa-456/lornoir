@@ -29,6 +29,12 @@ import ApiError from './utils/ApiError.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
 
 const app = express();
+
+// Trust Railway's reverse proxy so that the X-Forwarded-For header is
+// honored correctly (required by express-rate-limit for accurate client
+// IP resolution when running behind a load balancer).
+app.set('trust proxy', 1);
+
 const API_PREFIX = '/api/v1';
 
 // ---------- Security & performance middleware ----------
