@@ -70,7 +70,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         isHomeHero ? 'bg-transparent py-3.5 text-white' : 'glass py-3.5 shadow-glass text-ivory'
       }`}
     >
-      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(6rem,1fr)_auto_minmax(10rem,1fr)] xl:gap-5">
+      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(6rem,1fr)_auto_minmax(21rem,1fr)] xl:gap-6">
         {/* Mobile menu toggle */}
         <button
           className="xl:hidden shrink-0 text-2xl text-gold"
@@ -101,7 +101,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
+        <nav className="hidden min-w-max xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
           {NAV_LINKS.map((link) => (
             <div key={link.label} className="relative group">
               <NavLink
@@ -129,7 +129,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </nav>
 
         {/* Icons */}
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 xl:justify-self-end xl:gap-3">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 xl:min-w-max xl:justify-self-end xl:gap-3">
           <button
             aria-label="Search products"
             className="hover:text-gold transition-colors"
@@ -175,6 +175,13 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               </Link>
               <Link to="/login" className="hidden xl:block shrink-0 text-xs tracking-wide hover:text-gold transition-colors" data-cursor-hover>
                 Login
+              </Link>
+              <Link
+                to="/signup"
+                className="hidden xl:inline-flex shrink-0 items-center border border-gold/50 px-3 py-1.5 text-[10px] font-semibold tracking-[0.13em] uppercase text-gold transition-colors hover:bg-gold/10 hover:text-gold-deep"
+                data-cursor-hover
+              >
+                Create Account
               </Link>
             </>
           )}
