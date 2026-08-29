@@ -23,7 +23,13 @@ export default function Signup() {
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      await registerUser({ name: data.name, email: data.email, password: data.password });
+      await registerUser({
+        name: data.name.trim(),
+        email: data.email.trim(),
+        phone: data.phone.trim(),
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      });
       toast.success('Account created — check your email to verify.');
       navigate('/account');
     } catch (err) {
@@ -64,6 +70,17 @@ export default function Signup() {
             {...register('email', {
               required: 'Email is required',
               pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+            })}
+          />
+        </FormField>
+
+        <FormField label="Phone Number (optional)" error={errors.phone?.message}>
+          <input
+            type="tel"
+            className={inputClass}
+            placeholder="+92 300 1234567"
+            {...register('phone', {
+              validate: (value) => !value.trim() || value.trim().length >= 7 || 'Enter a valid phone number',
             })}
           />
         </FormField>

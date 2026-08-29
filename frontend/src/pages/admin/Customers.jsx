@@ -180,6 +180,9 @@ export default function AdminCustomers() {
             <tr className="text-left text-xs text-ivory/40 border-b border-gold/10">
               <th className="px-6 py-3 font-normal">Name</th>
               <th className="px-6 py-3 font-normal">Email</th>
+              <th className="px-6 py-3 font-normal">Phone</th>
+              <th className="px-6 py-3 font-normal">Joined</th>
+              <th className="px-6 py-3 font-normal">Orders</th>
               <th className="px-6 py-3 font-normal">Role</th>
               <th className="px-6 py-3 font-normal">Status</th>
               <th className="px-6 py-3 font-normal text-right">Actions</th>
@@ -190,6 +193,9 @@ export default function AdminCustomers() {
               <tr key={user._id} className="border-b border-gold/5 last:border-0 hover:bg-gold/5">
                 <td className="px-6 py-3">{user.name}</td>
                 <td className="px-6 py-3 text-ivory/60">{user.email}</td>
+                <td className="px-6 py-3 text-ivory/60">{user.phone || '—'}</td>
+                <td className="px-6 py-3 text-ivory/60 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td className="px-6 py-3">{user.orderCount || 0}</td>
                 <td className="px-6 py-3">
                   <select
                     value={user.role}
@@ -208,7 +214,7 @@ export default function AdminCustomers() {
               </tr>
             ))}
             {users.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-ivory/40">No users found</td></tr>
+              <tr><td colSpan={8} className="px-6 py-8 text-center text-ivory/40">No users found</td></tr>
             )}
           </tbody>
         </table>

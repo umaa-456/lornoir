@@ -82,9 +82,19 @@ export const listCustomers = asyncHandler(async (req, res) => {
     User.countDocuments(filter),
   ]);
 
+  const orderCounts = await Order.aggregate([
+    { $match: { user: { $in: users.map((user) => user._id) } } },
+    { $group: { _id: '$user', count: { $sum: 1 } } },
+  ]);
+  const countByUserId = new Map(orderCounts.map(({ _id, count }) => [String(_id), count]));
+  const usersWithOrderCounts = users.map((user) => ({
+    ...user.toSafeObject(),
+    orderCount: countByUserId.get(String(user._id)) || 0,
+  }));
+
   res.status(200).json({
     success: true,
-    users,
+    users: usersWithOrderCounts,
     pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / limit) || 1 },
   });
 });

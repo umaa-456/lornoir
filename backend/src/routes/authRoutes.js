@@ -15,6 +15,11 @@ router.post(
     body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
     body('email').isEmail().withMessage('Enter a valid email').normalizeEmail(),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('confirmPassword')
+      .notEmpty().withMessage('Please confirm your password')
+      .custom((value, { req }) => value === req.body.password)
+      .withMessage('Passwords do not match'),
+    body('phone').optional({ values: 'falsy' }).trim().isLength({ min: 7, max: 30 }).withMessage('Enter a valid phone number'),
   ],
   validate,
   authController.register

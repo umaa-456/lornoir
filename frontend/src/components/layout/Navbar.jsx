@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   HiOutlineSearch,
@@ -13,6 +13,7 @@ import {
 } from 'react-icons/hi';
 import { useTheme } from '@/context/ThemeContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { useAuth } from '@/context/AuthContext';
 import { categoriesApi } from '@/services/products';
 
 const NAV_LINKS = [
@@ -33,7 +34,9 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
+  const { user, isAuthenticated, logout } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isHomeHero = pathname === '/' && !scrolled;
   const isCollectionsRoute = pathname === '/shop' || pathname.startsWith('/product/');
 
@@ -51,6 +54,12 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    setMobileOpen(false);
+    navigate('/');
+  };
+
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => setCategories([]));
   }, []);
@@ -61,7 +70,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         isHomeHero ? 'bg-transparent py-6 text-white' : 'glass py-3 shadow-glass text-ivory'
       }`}
     >
-      <div className="mx-auto max-w-7xl px-5 md:px-8 flex items-center justify-between gap-3 xl:grid xl:grid-cols-[minmax(9rem,1fr)_auto_minmax(10rem,1fr)] xl:gap-6">
+      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(8rem,1fr)_auto_minmax(15rem,1fr)] xl:gap-5">
         {/* Mobile menu toggle */}
         <button
           className="xl:hidden shrink-0 text-2xl text-gold"
@@ -92,7 +101,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden xl:flex items-center justify-self-center gap-6 2xl:gap-8">
+        <nav className="hidden xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
           {NAV_LINKS.map((link) => (
             <div key={link.label} className="relative group">
               <NavLink
@@ -120,7 +129,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </nav>
 
         {/* Icons */}
-        <div className="flex shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 md:gap-5 xl:justify-self-end">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 xl:justify-self-end xl:gap-3">
           <button
             aria-label="Search products"
             className="hover:text-gold transition-colors"
@@ -131,15 +140,47 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           </button>
           <button
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="hidden sm:inline hover:text-gold transition-colors"
+            className="hidden md:inline-flex items-center hover:text-gold transition-colors"
             data-cursor-hover
             onClick={toggleTheme}
           >
             {isDark ? <HiOutlineSun /> : <HiOutlineMoon />}
           </button>
-          <Link to="/account" aria-label="Account" className="hidden sm:inline hover:text-gold transition-colors" data-cursor-hover>
-            <HiOutlineUser />
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/account" aria-label="My account" className="hidden sm:inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
+                <HiOutlineUser />
+              </Link>
+              <Link
+                to="/account"
+                title={user?.name}
+                className="hidden xl:block max-w-28 truncate text-xs tracking-wide hover:text-gold transition-colors"
+                data-cursor-hover
+              >
+                {user?.name}
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="hidden xl:block shrink-0 text-xs tracking-wide hover:text-gold transition-colors"
+                data-cursor-hover
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" aria-label="Login" className="hidden sm:inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
+                <HiOutlineUser />
+              </Link>
+              <Link to="/login" className="hidden xl:block shrink-0 text-xs tracking-wide hover:text-gold transition-colors" data-cursor-hover>
+                Login
+              </Link>
+              <Link to="/signup" className="hidden xl:block shrink-0 border border-gold/50 px-2.5 py-1 text-[10px] tracking-wide text-gold hover:bg-gold/10 transition-colors" data-cursor-hover>
+                Create account
+              </Link>
+            </>
+          )}
           <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
             <HiOutlineHeart />
             {wishlistCount > 0 && <CountBadge count={wishlistCount} />}
@@ -188,6 +229,24 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   ))}
                 </li>
               ))}
+              <li className="px-6 py-4">
+                {isAuthenticated ? (
+                  <div className="flex items-center justify-between gap-4">
+                    <Link to="/account" onClick={() => setMobileOpen(false)} className="min-w-0 text-sm text-ivory/85 hover:text-gold">
+                      <span className="block truncate">{user?.name}</span>
+                      <span className="text-xs text-ivory/50">My account</span>
+                    </Link>
+                    <button type="button" onClick={handleLogout} className="shrink-0 text-xs tracking-widest2 uppercase text-gold hover:text-ivory">
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-5 text-xs tracking-widest2 uppercase">
+                    <Link to="/login" onClick={() => setMobileOpen(false)} className="text-ivory/85 hover:text-gold">Login</Link>
+                    <Link to="/signup" onClick={() => setMobileOpen(false)} className="text-gold hover:text-ivory">Create Account</Link>
+                  </div>
+                )}
+              </li>
             </ul>
           </motion.nav>
         )}

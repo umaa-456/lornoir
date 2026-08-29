@@ -15,12 +15,21 @@ function respondWithToken(res, statusCode, user) {
 }
 
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
 
   const existing = await User.findOne({ email });
-  if (existing) throw ApiError.conflict('An account with this email already exists');
+  if (existing) throw ApiError.conflict('Email is already registered');
 
-  const user = await User.create({ name, email, password });
+  // This is public registration, so role and activation state must never be
+  // accepted from the request body. Protected admin provisioning is separate.
+  const user = await User.create({
+    name,
+    email,
+    password,
+    ...(phone && { phone }),
+    role: 'customer',
+    isActive: true,
+  });
 
   // Provision empty cart + wishlist for the new user
   await Promise.all([
