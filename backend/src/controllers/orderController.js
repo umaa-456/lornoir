@@ -11,6 +11,7 @@ import { sendOrderConfirmationEmail } from '../utils/email.js';
 import { getStripe } from '../services/stripeService.js';
 import User from '../models/User.js';
 import { calculateCartTotals } from '../utils/totals.js';
+import { getActiveSalesByProductIds, salePrice } from '../utils/salePricing.js';
 
 function generateOrderNumber() {
   const stamp = Date.now().toString(36).toUpperCase();
@@ -64,6 +65,18 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (product.stockStatus === 'out_of_stock') throw ApiError.badRequest(`${item.name} is currently out of stock. Please remove it from your cart before continuing.`);
     const variant = product.variants.find((v) => v.sku === item.sku);
     if (variant.stock < item.qty) throw ApiError.badRequest(`Not enough stock for ${item.name}`);
+  }
+
+  // Reprice the authoritative server cart at checkout. A campaign may have
+  // started or ended after the shopper added an item, so no stale browser or
+  // cart price can become an order snapshot.
+  const cartProducts = await Product.find({ _id: { $in: cart.items.map((item) => item.product) }, isActive: true });
+  const productsById = new Map(cartProducts.map((product) => [product._id.toString(), product]));
+  const activeSales = await getActiveSalesByProductIds(cartProducts.map((product) => product._id));
+  for (const item of cart.items) {
+    const product = productsById.get(item.product.toString());
+    const variant = product?.variants.find((value) => value.sku === item.sku);
+    if (variant) item.price = salePrice(variant.price, activeSales.get(product._id.toString()));
   }
 
   // Repeat the availability predicates in the write. This prevents a stale

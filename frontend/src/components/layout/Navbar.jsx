@@ -14,6 +14,7 @@ import {
 import { useTheme } from '@/context/ThemeContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { categoriesApi } from '@/services/products';
+import { useAuth } from '@/context/AuthContext';
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -33,6 +34,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
+  const { user, isAuthenticated, logout } = useAuth();
   const { pathname } = useLocation();
   const isHomeHero = pathname === '/' && !scrolled;
   const isCollectionsRoute = pathname === '/shop' || pathname.startsWith('/product/');
@@ -137,9 +139,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           >
             {isDark ? <HiOutlineSun /> : <HiOutlineMoon />}
           </button>
-          <Link to="/account" aria-label="Account" className="hidden sm:inline hover:text-gold transition-colors" data-cursor-hover>
-            <HiOutlineUser />
-          </Link>
+          {isAuthenticated ? <div className="hidden sm:flex items-center gap-2 text-xs"><Link to="/account" aria-label="Your account" className="flex items-center gap-1 hover:text-gold transition-colors" data-cursor-hover><HiOutlineUser className="text-xl"/><span className="max-w-20 truncate">{user?.name?.split(' ')[0] || 'Account'}</span></Link><button onClick={logout} className="text-ivory/55 hover:text-gold">Logout</button></div> : <Link to="/login" aria-label="Sign in" className="hidden sm:inline hover:text-gold transition-colors" data-cursor-hover><HiOutlineUser /></Link>}
           <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
             <HiOutlineHeart />
             {wishlistCount > 0 && <CountBadge count={wishlistCount} />}
@@ -188,6 +188,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   ))}
                 </li>
               ))}
+              <li className="px-6 py-4 text-sm">{isAuthenticated ? <div className="flex items-center justify-between"><Link to="/account" onClick={() => setMobileOpen(false)} className="text-gold">{user?.name || 'Your account'}</Link><button onClick={() => { logout(); setMobileOpen(false); }} className="text-ivory/60">Logout</button></div> : <Link to="/login" onClick={() => setMobileOpen(false)} className="text-gold">Sign In / Create Account</Link>}</li>
             </ul>
           </motion.nav>
         )}

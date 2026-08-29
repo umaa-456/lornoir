@@ -7,7 +7,7 @@ import FormField, { inputClass } from '@/components/ui/FormField';
 import adminApi from '@/services/adminApi';
 import api from '@/services/api';
 
-const TAGS = ['new', 'bestseller', 'trending', 'featured', 'flash-sale', 'gift-sets'];
+const TAGS = ['new', 'bestseller', 'trending', 'featured', 'gift-sets'];
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -35,7 +35,7 @@ export default function AdminProductForm() {
       notes: { top: '', heart: '', base: '' },
       tags: [],
       stockStatus: 'in_stock',
-      variants: [{ label: '50ml', sku: '', price: '', compareAtPrice: '', stock: '' }],
+      variants: [{ label: '50ml', sku: '', price: '', stock: '' }],
     },
   });
 
@@ -142,7 +142,6 @@ export default function AdminProductForm() {
         variants: data.variants.map((v) => ({
           ...v,
           price: Number(v.price),
-          compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
           stock: Number(v.stock),
         })),
       };
@@ -298,7 +297,7 @@ export default function AdminProductForm() {
             <p className="text-[11px] tracking-widest2 uppercase text-ivory/50">Size Variants</p>
             <button
               type="button"
-              onClick={() => append({ label: '', sku: '', price: '', compareAtPrice: '', stock: '' })}
+              onClick={() => append({ label: '', sku: '', price: '', stock: '' })}
               className="flex items-center gap-1 text-xs text-gold hover:underline"
             >
               <HiOutlinePlus /> Add variant
@@ -306,11 +305,10 @@ export default function AdminProductForm() {
           </div>
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center glass p-3">
+              <div key={field.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center glass p-3">
                 <input placeholder="Label (50ml)" className={inputClass} {...register(`variants.${index}.label`, { required: true })} />
                 <input placeholder="SKU" className={inputClass} {...register(`variants.${index}.sku`, { required: true })} />
                 <input type="number" step="0.01" placeholder="Price" className={inputClass} {...register(`variants.${index}.price`, { required: true })} />
-                <input type="number" step="0.01" placeholder="Compare at" className={inputClass} {...register(`variants.${index}.compareAtPrice`)} />
                 <input type="number" placeholder="Stock" className={inputClass} {...register(`variants.${index}.stock`, { required: true })} />
                 <button
                   type="button"

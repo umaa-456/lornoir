@@ -10,6 +10,7 @@ const router = Router();
 router.get('/', productController.listProducts);
 router.get('/stats', productController.getCatalogueStats);
 router.get('/low-stock', protect, restrictTo('admin', 'employee'), productController.getLowStockProducts);
+router.get('/sale-options', protect, restrictTo('admin', 'employee'), productController.listSaleProducts);
 router.get('/id/:id', protect, restrictTo('admin', 'employee'), productController.getAdminProduct);
 router.get('/availability', productController.getProductsAvailability);
 router.get('/:slug', productController.getProduct);

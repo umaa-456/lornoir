@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { productsApi } from '@/services/products';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { getSalePrice } from '@/utils/salePricing';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'lornoir_cart';
@@ -44,7 +45,7 @@ export function CartProvider({ children }) {
           productId: product._id,
           name: product.name,
           image: product.images?.[0]?.url || product.image,
-          price: variant?.price ?? product.price,
+          price: getSalePrice(product, variant?.price ?? product.price),
           variant: variant?.label || null,
           sku: variant?.sku || product.sku,
           qty,

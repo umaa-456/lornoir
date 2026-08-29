@@ -15,6 +15,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import useRecentlyViewed from '@/hooks/useRecentlyViewed';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { formatCurrency } from '@/utils/currency';
+import { getSalePrice, isOnActiveSale } from '@/utils/salePricing';
 
 const TABS = ['Description', 'Notes', 'Reviews'];
 
@@ -80,6 +81,8 @@ export default function ProductDetail() {
   if (!product) return <PageLoader />;
 
   const variant = product.variants[selectedVariant];
+  const onSale = isOnActiveSale(product);
+  const displayedPrice = getSalePrice(product, variant.price);
   const wishlisted = isWishlisted(product._id);
   const images = product.images?.length ? product.images : [{ url: null }];
   const showGalleryControls = images.length > 1;
@@ -115,7 +118,7 @@ export default function ProductDetail() {
       '@type': 'Offer',
       url: typeof window !== 'undefined' ? window.location.href : undefined,
       priceCurrency: settings.currency || 'PKR',
-      price: variant.price,
+      price: displayedPrice,
       availability: !unavailable && variant.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   };
@@ -206,7 +209,10 @@ export default function ProductDetail() {
             </span>
           </div>
 
-          <p className="mt-6 text-2xl font-body">{formatCurrency(variant.price, settings.currency)}</p>
+          <div className="mt-6 flex items-baseline gap-3">
+            <p className="text-2xl font-body">{formatCurrency(displayedPrice, settings.currency)}</p>
+            {onSale && <><span className="text-sm text-ivory/40 line-through">{formatCurrency(variant.price, settings.currency)}</span><span className="text-xs text-ember-light tracking-wide">{product.activeSale.discount}% OFF</span></>}
+          </div>
           <p className={`mt-3 text-sm font-medium ${unavailable ? 'text-ember-light' : 'text-primary'}`}>
             {availability === 'coming_soon' ? 'Coming Soon' : unavailable ? 'Out of Stock' : variant.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
           </p>

@@ -20,7 +20,9 @@ export const register = asyncHandler(async (req, res) => {
   const existing = await User.findOne({ email });
   if (existing) throw ApiError.conflict('An account with this email already exists');
 
-  const user = await User.create({ name, email, password });
+  // Public registration can only ever create a normal storefront customer.
+  // Deliberately ignore any privileged role supplied by an untrusted client.
+  const user = await User.create({ name, email, password, role: 'customer', isActive: true });
 
   // Provision empty cart + wishlist for the new user
   await Promise.all([

@@ -4,6 +4,7 @@ import Brand from '../models/Brand.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { uploadBuffer, destroyImage } from '../services/cloudinaryService.js';
+import { getActiveSalesByProductIds, withActiveSale } from '../utils/salePricing.js';
 
 const SORT_MAP = {
   'price-asc': { basePrice: 1 },
@@ -67,9 +68,10 @@ export const listProducts = asyncHandler(async (req, res) => {
     Product.countDocuments(filter),
   ]);
 
+  const activeSales = await getActiveSalesByProductIds(products.map((product) => product._id));
   res.status(200).json({
     success: true,
-    products,
+    products: products.map((product) => withActiveSale(product, activeSales)),
     pagination: {
       page: pageNum,
       limit: limitNum,
@@ -84,7 +86,8 @@ export const getProduct = asyncHandler(async (req, res) => {
     .populate('brand', 'name slug tier')
     .populate('category', 'name slug');
   if (!product) throw ApiError.notFound('Product not found');
-  res.status(200).json({ success: true, product });
+  const activeSales = await getActiveSalesByProductIds([product._id]);
+  res.status(200).json({ success: true, product: withActiveSale(product, activeSales) });
 });
 
 export const getAdminProduct = asyncHandler(async (req, res) => {
@@ -116,7 +119,8 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
     .limit(4)
     .populate('brand', 'name slug');
 
-  res.status(200).json({ success: true, products: related });
+  const activeSales = await getActiveSalesByProductIds(related.map((item) => item._id));
+  res.status(200).json({ success: true, products: related.map((item) => withActiveSale(item, activeSales)) });
 });
 
 // ---------- Admin ----------
@@ -194,6 +198,14 @@ export const getLowStockProducts = asyncHandler(async (req, res) => {
     p.variants.some((v) => v.stock > 0 && v.stock <= p.lowStockThreshold)
   );
   res.status(200).json({ success: true, products: lowStock });
+});
+
+export const listSaleProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({ isActive: true })
+    .select('name slug images variants basePrice')
+    .sort('name')
+    .lean();
+  res.status(200).json({ success: true, products });
 });
 
 /** Public, aggregated catalogue stats for the homepage trust bar — real

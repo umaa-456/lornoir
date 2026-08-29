@@ -24,7 +24,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await registerUser({ name: data.name, email: data.email, password: data.password });
-      toast.success('Account created — check your email to verify.');
+      toast.success('Account created — you are now signed in.');
       navigate('/account');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not create account');

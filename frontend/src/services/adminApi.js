@@ -15,6 +15,7 @@ export const adminApi = {
   deleteProductImage: (id, publicId) => api.delete(`/products/${id}/images/${encodeURIComponent(publicId)}`).then((r) => r.data),
   reorderProductImages: (id, publicIds) => api.patch(`/products/${id}/images/order`, { publicIds }).then((r) => r.data),
   getLowStock: () => api.get('/products/low-stock').then((r) => r.data),
+  listSaleProducts: () => api.get('/products/sale-options').then((r) => r.data),
 
   // Brands
   listBrands: () => api.get('/brands').then((r) => r.data),
