@@ -197,19 +197,15 @@ export default function AdminCustomers() {
                 <td className="px-6 py-3 text-ivory/60 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-3">{user.orderCount || 0}</td>
                 <td className="px-6 py-3">
-                  <select
-                    value={user.role}
-                    onChange={(e) => changeRole(user, e.target.value)}
-                    className="bg-obsidian border border-gold/20 px-2 py-1 text-xs capitalize"
-                  >
-                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  {user.role === 'customer' ? <span className="capitalize text-ivory/70">Customer</span> : (
+                    <select value={user.role} onChange={(e) => changeRole(user, e.target.value)} className="bg-obsidian border border-gold/20 px-2 py-1 text-xs capitalize">
+                      {['employee', 'admin'].map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  )}
                 </td>
                 <td className="px-6 py-3"><StatusBadge status={user.isActive ? 'active' : 'inactive'} /></td>
                 <td className="px-6 py-3 text-right">
-                  <button onClick={() => toggleActive(user)} className="text-xs text-gold hover:underline">
-                    {user.isActive ? 'Deactivate' : 'Reactivate'}
-                  </button>
+                  {user.role !== 'customer' && <button onClick={() => toggleActive(user)} className="text-xs text-gold hover:underline">{user.isActive ? 'Deactivate' : 'Reactivate'}</button>}
                 </td>
               </tr>
             ))}

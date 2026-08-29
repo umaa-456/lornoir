@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { placeholderSwatch, productImage } from '@/utils/placeholderSwatch';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { formatCurrency } from '@/utils/currency';
+import { getSalePrice, isOnActiveSale } from '@/utils/salePricing';
 
 export default function QuickViewModal({ product, open, onClose }) {
   const { settings } = useSiteSettings();
@@ -13,7 +14,9 @@ export default function QuickViewModal({ product, open, onClose }) {
 
   const image = productImage(product);
   const defaultVariant = product.variants?.[0];
-  const price = defaultVariant?.price ?? product.basePrice;
+  const regularPrice = defaultVariant?.price ?? product.basePrice;
+  const price = getSalePrice(product, regularPrice);
+  const onSale = isOnActiveSale(product);
   const unavailable = (product.stockStatus || 'in_stock') !== 'in_stock';
 
   return (
@@ -74,9 +77,10 @@ export default function QuickViewModal({ product, open, onClose }) {
 
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-2xl font-body">{formatCurrency(price, settings.currency)}</span>
-                {defaultVariant?.compareAtPrice && (
-                  <span className="text-sm text-ivory/40 line-through">{formatCurrency(defaultVariant.compareAtPrice, settings.currency)}</span>
+                {onSale && (
+                  <span className="text-sm text-ivory/40 line-through">{formatCurrency(regularPrice, settings.currency)}</span>
                 )}
+                {onSale && <span className="text-xs text-ember-light">{product.activeSale.discount}% OFF</span>}
               </div>
 
               <dl className="mt-6 space-y-2 text-sm text-ivory/70">

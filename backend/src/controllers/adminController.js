@@ -131,17 +131,17 @@ export const createStaffMember = asyncHandler(async (req, res) => {
 
 export const updateUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
-  if (!['customer', 'employee', 'admin'].includes(role)) throw ApiError.badRequest('Invalid role');
+  if (!['employee', 'admin'].includes(role)) throw ApiError.badRequest('Staff role must be employee or admin');
 
-  const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
-  if (!user) throw ApiError.notFound('User not found');
+  const user = await User.findOneAndUpdate({ _id: req.params.id, role: { $in: ['employee', 'admin'] } }, { role }, { new: true }).select('-password');
+  if (!user) throw ApiError.notFound('Staff member not found');
 
   res.status(200).json({ success: true, user });
 });
 
 export const toggleUserActive = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) throw ApiError.notFound('User not found');
+  const user = await User.findOne({ _id: req.params.id, role: { $in: ['employee', 'admin'] } });
+  if (!user) throw ApiError.notFound('Staff member not found');
 
   user.isActive = !user.isActive;
   await user.save();

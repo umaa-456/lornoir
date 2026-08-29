@@ -4,6 +4,7 @@ import Coupon from '../models/Coupon.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { calculateCartTotals } from '../utils/totals.js';
+import { getActiveSalesByProductIds, salePrice } from '../utils/salePricing.js';
 
 async function getOrCreateCart(userId) {
   let cart = await Cart.findOne({ user: userId });
@@ -32,6 +33,8 @@ export const addToCart = asyncHandler(async (req, res) => {
   if (variant.stock < qty) throw ApiError.badRequest('Not enough stock available');
 
   const cart = await getOrCreateCart(req.user._id);
+  const activeSales = await getActiveSalesByProductIds([product._id]);
+  const price = salePrice(variant.price, activeSales.get(product._id.toString()));
   const existing = cart.items.find((i) => i.sku === variant.sku);
 
   if (existing) {
@@ -43,7 +46,7 @@ export const addToCart = asyncHandler(async (req, res) => {
       name: product.name,
       image: product.images[0]?.url || null,
       variantLabel: variant.label,
-      price: variant.price,
+      price,
       qty: Math.min(Number(qty), variant.stock),
     });
   }
@@ -67,6 +70,8 @@ export const updateCartItem = asyncHandler(async (req, res) => {
   const variant = product.variants.find((v) => v.sku === sku);
   if (!variant || variant.stock < qty) throw ApiError.badRequest(`Not enough stock available for ${item.name}`);
 
+  const activeSales = await getActiveSalesByProductIds([product._id]);
+  item.price = salePrice(variant.price, activeSales.get(product._id.toString()));
   item.qty = Number(qty);
   await cart.save();
   res.status(200).json({ success: true, cart, totals: await calculateCartTotals(cart) });

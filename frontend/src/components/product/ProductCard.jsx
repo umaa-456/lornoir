@@ -8,6 +8,7 @@ import { placeholderSwatch, productImage } from '@/utils/placeholderSwatch';
 import QuickViewModal from './QuickViewModal';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { formatCurrency } from '@/utils/currency';
+import { getSalePrice, isOnActiveSale } from '@/utils/salePricing';
 
 export default function ProductCard({ product }) {
   const cardRef = useRef(null);
@@ -20,9 +21,9 @@ export default function ProductCard({ product }) {
 
   const image = productImage(product);
   const defaultVariant = product.variants?.[0];
-  const price = defaultVariant?.price ?? product.basePrice;
-  const compareAtPrice = defaultVariant?.compareAtPrice;
-  const onSale = compareAtPrice && compareAtPrice > price;
+  const regularPrice = defaultVariant?.price ?? product.basePrice;
+  const onSale = isOnActiveSale(product);
+  const price = getSalePrice(product, regularPrice);
   const availability = product.stockStatus || 'in_stock';
   const unavailable = availability !== 'in_stock';
 
@@ -74,7 +75,7 @@ export default function ProductCard({ product }) {
 
             {onSale && (
               <span className="absolute top-3 left-3 bg-ember text-ivory text-[10px] tracking-widest2 uppercase px-2 py-1">
-                Sale
+                {product.activeSale.discount}% Off
               </span>
             )}
             {product.tags?.includes('new') && !onSale && (
@@ -132,7 +133,7 @@ export default function ProductCard({ product }) {
           <div className="mt-2 flex items-center gap-2">
             <span className="font-body text-sm">{formatCurrency(price, settings.currency)}</span>
             {onSale && (
-              <span className="font-body text-xs text-ivory/40 line-through">{formatCurrency(compareAtPrice, settings.currency)}</span>
+              <span className="font-body text-xs text-ivory/40 line-through">{formatCurrency(regularPrice, settings.currency)}</span>
             )}
           </div>
         </Link>
