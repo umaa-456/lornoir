@@ -6,6 +6,7 @@ import CategoryShowcase from '@/components/sections/CategoryShowcase';
 import FlashSale from '@/components/sections/FlashSale';
 import Testimonials from '@/components/sections/Testimonials';
 import FAQSection from '@/components/sections/FAQSection';
+import CustomerSignupPrompt from '@/components/layout/CustomerSignupPrompt';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
           content={settings.footerTagline || `Shop ${settings.siteName} online.`}
         />
       </Helmet>
+      <CustomerSignupPrompt />
       <Hero />
       <StatsBar />
       <ProductShowcase />

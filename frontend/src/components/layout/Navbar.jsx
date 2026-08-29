@@ -41,7 +41,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const isCollectionsRoute = pathname === '/shop' || pathname.startsWith('/product/');
 
   const navLinkClass = (isActive) =>
-    `relative font-body text-[13px] tracking-widest2 uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
+    `relative font-body text-[11px] tracking-[0.16em] uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
       isActive
         ? 'text-gold after:w-full'
         : `${isHomeHero ? 'text-white/90 hover:text-gold' : 'text-ivory/80 hover:text-gold'} after:w-0 hover:after:w-full`
@@ -67,10 +67,10 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isHomeHero ? 'bg-transparent py-6 text-white' : 'glass py-3 shadow-glass text-ivory'
+        isHomeHero ? 'bg-transparent py-3.5 text-white' : 'glass py-3.5 shadow-glass text-ivory'
       }`}
     >
-      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(8rem,1fr)_auto_minmax(15rem,1fr)] xl:gap-5">
+      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(6rem,1fr)_auto_minmax(10rem,1fr)] xl:gap-5">
         {/* Mobile menu toggle */}
         <button
           className="xl:hidden shrink-0 text-2xl text-gold"
@@ -176,9 +176,6 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               <Link to="/login" className="hidden xl:block shrink-0 text-xs tracking-wide hover:text-gold transition-colors" data-cursor-hover>
                 Login
               </Link>
-              <Link to="/signup" className="hidden xl:block shrink-0 border border-gold/50 px-2.5 py-1 text-[10px] tracking-wide text-gold hover:bg-gold/10 transition-colors" data-cursor-hover>
-                Create account
-              </Link>
             </>
           )}
           <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
@@ -210,7 +207,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                     onClick={() => setMobileOpen(false)}
                     end={link.to === '/'}
                     className={({ isActive }) =>
-                      `block px-6 py-4 text-sm tracking-widest2 uppercase hover:text-gold ${
+                      `block px-6 py-4 text-sm tracking-[0.18em] uppercase hover:text-gold ${
                         (link.hasCategories ? isCollectionsRoute : isActive) ? 'text-gold' : 'text-ivory/85'
                       }`
                     }
