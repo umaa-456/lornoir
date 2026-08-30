@@ -40,6 +40,9 @@ const productSchema = new mongoose.Schema(
     images: { type: [imageSchema], default: [] }, // starts empty — the admin form creates the product first, then uploads images in a second step (storefront falls back to a placeholder until then)
     variants: { type: [variantSchema], validate: (v) => v.length > 0 },
     basePrice: { type: Number, required: true, min: 0 }, // for sorting/filtering across variants
+    // `null` deliberately means the administrator has not configured product
+    // shipping yet. An explicit 0 means this product ships free.
+    shippingFee: { type: Number, default: null, min: 0 },
     tags: {
       type: [String],
       enum: ['new', 'bestseller', 'trending', 'featured', 'flash-sale', 'gift-sets'],

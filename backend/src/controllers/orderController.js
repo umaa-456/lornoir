@@ -149,6 +149,11 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (variant) item.price = salePrice(variant.price, activeSales.get(product._id.toString()));
   }
 
+  const orderItems = cart.items.map((item) => {
+    const product = productsById.get(item.product.toString());
+    return { ...item.toObject(), shippingFee: product?.shippingFee ?? null };
+  });
+
   // Repeat the availability predicates in the write. This prevents a stale
   // checkout from decrementing stock after an admin marks a product
   // unavailable or another customer purchases the final unit.
@@ -157,7 +162,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   let order;
   let couponRecorded = false;
   try {
-    const { subtotal, discount, shipping: shippingCost, total } = await calculateCartTotals(cart);
+    const { subtotal, discount, shipping: shippingCost, total } = await calculateCartTotals(cart, cartProducts, { requireConfiguredShipping: true });
     if (cart.coupon?.code) {
       await Coupon.updateOne({ code: cart.coupon.code }, { $inc: { usedCount: 1 } });
       couponRecorded = true;
@@ -165,7 +170,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     order = await Order.create({
       orderNumber: generateOrderNumber(),
       user: req.user._id,
-      items: cart.items,
+      items: orderItems,
       shippingAddress: snapshotAddress(shippingAddress),
       billingAddress: snapshotAddress(billingAddress),
       paymentMethod,

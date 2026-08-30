@@ -20,7 +20,6 @@ const DEFAULTS = {
   footerTagline:
     'A carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials.',
   contact: { email: 'hello@arwastore.pk', phone: '+92 317 6346085', address: 'Pakistan' },
-  shipping: { freeShipping: false, fixedCharge: 0 },
 };
 
 const SiteSettingsContext = createContext({ settings: DEFAULTS, loading: true, refresh: () => {} });
@@ -32,7 +31,7 @@ export function SiteSettingsProvider({ children }) {
   const refresh = () => {
     siteSettingsApi
       .get()
-      .then((data) => setSettings({ ...DEFAULTS, ...data, hero: { ...DEFAULTS.hero, ...data.hero }, contact: { ...DEFAULTS.contact, ...data.contact }, shipping: { ...DEFAULTS.shipping, ...data.shipping } }))
+      .then((data) => setSettings({ ...DEFAULTS, ...data, hero: { ...DEFAULTS.hero, ...data.hero }, contact: { ...DEFAULTS.contact, ...data.contact } }))
       .catch(() => {
         /* Backend unreachable or not yet configured — fall back to defaults silently. */
       })

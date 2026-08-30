@@ -9,6 +9,9 @@ const orderItemSchema = new mongoose.Schema(
     variantLabel: { type: String, default: null },
     price: { type: Number, required: true },
     qty: { type: Number, required: true },
+    // Per-unit shipping at the instant this order was placed. It complements
+    // shippingCost (the order total) for historical audit/detail views.
+    shippingFee: { type: Number, min: 0, default: null },
   },
   { _id: false }
 );

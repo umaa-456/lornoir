@@ -15,6 +15,7 @@ export default function Cart() {
     subtotal,
     discount,
     shipping,
+    shippingConfigured,
     total,
     coupon,
     updateQty,
@@ -158,7 +159,7 @@ export default function Cart() {
             <div className="space-y-2 text-sm border-t border-gold/10 pt-5">
               <SummaryLine label="Subtotal" value={subtotal} currency={settings.currency} />
               {discount > 0 && <SummaryLine label="Discount" value={-discount} currency={settings.currency} />}
-              <SummaryLine label="Shipping" value={shipping} currency={settings.currency} freeLabel={Boolean(settings.shipping?.freeShipping)} />
+              <SummaryLine label="Shipping" value={shipping} currency={settings.currency} freeLabel={shippingConfigured && shipping === 0} pending={!shippingConfigured} />
               <div className="border-t border-gold/10 pt-3 mt-3">
                 <SummaryLine label="Total" value={total} currency={settings.currency} bold />
               </div>
@@ -178,12 +179,15 @@ export default function Cart() {
   );
 }
 
-function SummaryLine({ label, value, currency, bold, freeLabel }) {
+function SummaryLine({ label, value, currency, bold, freeLabel, pending }) {
   return (
     <div className={`flex justify-between ${bold ? 'font-semibold text-base' : 'text-ivory/60'}`}>
       <span>{label}</span>
       <span className={bold ? 'text-gold' : ''}>
-        {freeLabel ? 'Free' : `${value < 0 ? '−' : ''}${formatCurrency(Math.abs(value), currency)}`}
+        {pending ? 'Pending configuration' : null}
+        {!pending && (
+        freeLabel ? 'Free' : `${value < 0 ? '−' : ''}${formatCurrency(Math.abs(value), currency)}`
+        )}
       </span>
     </div>
   );

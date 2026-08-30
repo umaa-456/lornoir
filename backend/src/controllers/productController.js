@@ -115,7 +115,7 @@ export const getProductsAvailability = asyncHandler(async (req, res) => {
   const ids = String(req.query.ids || '').split(',').filter((id) => /^[a-f\d]{24}$/i.test(id));
   if (!ids.length) return res.status(200).json({ success: true, products: [] });
   const products = await Product.find({ _id: { $in: ids }, isActive: true })
-    .select('_id stockStatus variants.sku variants.stock');
+    .select('_id stockStatus shippingFee variants.sku variants.stock');
   res.status(200).json({ success: true, products: products.map(withInventory) });
 });
 
@@ -238,6 +238,41 @@ export const listSaleProducts = asyncHandler(async (req, res) => {
     .sort('name')
     .lean();
   res.status(200).json({ success: true, products });
+});
+
+// Dedicated product projection for the Shipping Management console. Products
+// stay the sole source of truth; this is not a separate shipping catalogue.
+export const listShippingProducts = asyncHandler(async (req, res) => {
+  const { q = '', status = 'all', page = 1, limit = 20 } = req.query;
+  const pageNum = Math.max(1, Number(page) || 1);
+  const limitNum = Math.min(50, Math.max(1, Number(limit) || 20));
+  const filter = { isActive: true };
+  const query = String(q).trim();
+  if (query) {
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [{ name: { $regex: escaped, $options: 'i' } }, { 'variants.sku': { $regex: escaped, $options: 'i' } }];
+  }
+  if (status === 'configured') filter.shippingFee = { $ne: null };
+  if (status === 'not_configured') filter.shippingFee = null;
+  if (status === 'free') filter.shippingFee = 0;
+
+  const [products, total] = await Promise.all([
+    Product.find(filter).select('name images variants basePrice shippingFee stockStatus').sort('name').skip((pageNum - 1) * limitNum).limit(limitNum),
+    Product.countDocuments(filter),
+  ]);
+  res.status(200).json({
+    success: true,
+    products: products.map(withInventory),
+    pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) || 1 },
+  });
+});
+
+export const updateProductShippingFee = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product || !product.isActive) throw ApiError.notFound('Product not found');
+  product.shippingFee = Number(req.body.shippingFee);
+  await product.save();
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 /** Public, aggregated catalogue stats for the homepage trust bar — real

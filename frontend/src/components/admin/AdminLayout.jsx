@@ -14,6 +14,7 @@ import {
   HiOutlinePhotograph,
   HiOutlineCog,
   HiOutlineLightningBolt,
+  HiOutlineTruck,
   HiOutlineBell,
   HiOutlineMenu,
   HiOutlineX,
@@ -34,6 +35,7 @@ const NAV = [
   { to: '/admin/reviews', label: 'Reviews', icon: HiOutlineStar },
   { to: '/admin/coupons', label: 'Coupons', icon: HiOutlineTicket },
   { to: '/admin/sales', label: 'Sales', icon: HiOutlineLightningBolt },
+  { to: '/admin/shipping-management', label: 'Shipping Management', icon: HiOutlineTruck, adminOnly: true },
   { to: '/admin/inventory', label: 'Inventory', icon: HiOutlineExclamationCircle },
   { to: '/admin/branding', label: 'Branding & Content', icon: HiOutlinePhotograph },
   { to: '/admin/settings', label: 'Settings', icon: HiOutlineCog },
@@ -74,7 +76,7 @@ export default function AdminLayout() {
         </div>
 
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          {NAV.map((item) => (
+          {NAV.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

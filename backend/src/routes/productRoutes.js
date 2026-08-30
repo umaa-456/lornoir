@@ -11,6 +11,7 @@ router.get('/', productController.listProducts);
 router.get('/stats', productController.getCatalogueStats);
 router.get('/low-stock', protect, restrictTo('admin', 'employee'), productController.getLowStockProducts);
 router.get('/sale-options', protect, restrictTo('admin', 'employee'), productController.listSaleProducts);
+router.get('/shipping-management', protect, restrictTo('admin'), productController.listShippingProducts);
 router.get('/id/:id', protect, restrictTo('admin', 'employee'), productController.getAdminProduct);
 router.get('/availability', productController.getProductsAvailability);
 router.get('/:slug', productController.getProduct);
@@ -32,6 +33,14 @@ router.post(
 );
 
 router.patch('/:id', protect, restrictTo('admin'), productController.updateProduct);
+router.patch(
+  '/:id/shipping-fee',
+  protect,
+  restrictTo('admin'),
+  [body('shippingFee').isFloat({ min: 0 }).withMessage('Shipping fee must be a non-negative number')],
+  validate,
+  productController.updateProductShippingFee
+);
 router.patch('/:id/images/order', protect, restrictTo('admin'), productController.reorderProductImages);
 router.delete('/:id', protect, restrictTo('admin'), productController.deleteProduct);
 router.post(

@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { productsApi } from '@/services/products';
-import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { getSalePrice } from '@/utils/salePricing';
 
 const CartContext = createContext(null);
@@ -17,7 +16,6 @@ function readStorage() {
 }
 
 export function CartProvider({ children }) {
-  const { settings } = useSiteSettings();
   const [items, setItems] = useState(readStorage);
   const [coupon, setCoupon] = useState(null);
 
@@ -51,6 +49,7 @@ export function CartProvider({ children }) {
           qty,
           stock: variant?.stock ?? product.stock,
           stockStatus: product.stockStatus || 'in_stock',
+          shippingFee: product.shippingFee ?? null,
         },
       ];
     });
@@ -82,7 +81,7 @@ export function CartProvider({ children }) {
         const stockStatus = product?.stockStatus || 'out_of_stock';
         const stock = variant?.stock ?? 0;
         if (stockStatus !== 'in_stock' || stock < item.qty) unavailable.push(item.name);
-        return { ...item, stockStatus, stock };
+        return { ...item, stockStatus, stock, shippingFee: product?.shippingFee ?? null };
       }));
       return unavailable;
     } catch {
@@ -90,6 +89,11 @@ export function CartProvider({ children }) {
       return [];
     }
   };
+
+  // Refresh compact product data for legacy browser carts and whenever a
+  // line/quantity changes. The server remains authoritative at checkout.
+  const cartSignature = items.map((item) => `${item.productId}:${item.sku}:${item.qty}`).join('|');
+  useEffect(() => { if (cartSignature) revalidateCart(); }, [cartSignature]);
 
   const applyCoupon = (couponData) => {
     setCoupon(couponData);
@@ -109,7 +113,9 @@ export function CartProvider({ children }) {
     return Math.min(coupon.value, subtotal);
   }, [coupon, subtotal]);
 
-  const shipping = items.length === 0 || settings.shipping?.freeShipping ? 0 : Number(settings.shipping?.fixedCharge || 0);
+  const shippingConfigured = items.length === 0 || items.every((item) => item.shippingFee !== null && item.shippingFee !== '' && Number.isFinite(Number(item.shippingFee)) && Number(item.shippingFee) >= 0);
+  // Initial rule: each product's shipping fee is charged per unit.
+  const shipping = shippingConfigured ? items.reduce((sum, item) => sum + Number(item.shippingFee) * item.qty, 0) : 0;
   const tax = Math.max(0, (subtotal - discount) * 0.0);
   const total = Math.max(0, subtotal - discount + shipping + tax);
   const itemCount = items.reduce((sum, i) => sum + i.qty, 0);
@@ -121,6 +127,7 @@ export function CartProvider({ children }) {
     subtotal,
     discount,
     shipping,
+    shippingConfigured,
     tax,
     total,
     addToCart,

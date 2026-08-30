@@ -10,7 +10,7 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart || cart.items.length === 0) throw ApiError.badRequest('Your cart is empty');
 
-  const { total } = await calculateCartTotals(cart);
+  const { total } = await calculateCartTotals(cart, null, { requireConfiguredShipping: true });
 
   const paymentIntent = await getStripe().paymentIntents.create({
     amount: Math.round(total * 100), // Stripe expects the smallest currency unit

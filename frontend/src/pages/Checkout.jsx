@@ -17,7 +17,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const STEPS = ['Address', 'Subscription & Rating', 'Payment', 'Review'];
 
 export default function Checkout() {
-  const { items, subtotal, discount, shipping, total, coupon, clearCart, revalidateCart } = useCart();
+  const { items, subtotal, discount, shipping, shippingConfigured, total, coupon, clearCart, revalidateCart } = useCart();
   const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -252,7 +252,7 @@ export default function Checkout() {
           <div className="border-t border-gold/10 pt-4 space-y-2 text-sm">
             <div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>{formatCurrency(subtotal, settings.currency)}</span></div>
             {discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−{formatCurrency(discount, settings.currency)}</span></div>}
-            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{settings.shipping?.freeShipping ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
+            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{!shippingConfigured ? 'Pending configuration' : shipping === 0 ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
             <div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">{formatCurrency(total, settings.currency)}</span></div>
           </div>
         </div>

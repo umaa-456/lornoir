@@ -47,10 +47,6 @@ const siteSettingsSchema = new mongoose.Schema(
       phone: { type: String, default: '+92 317 6346085' },
       address: { type: String, default: 'Pakistan' },
     },
-    shipping: {
-      freeShipping: { type: Boolean, default: false },
-      fixedCharge: { type: Number, default: 0, min: 0 },
-    },
   },
   { timestamps: true }
 );

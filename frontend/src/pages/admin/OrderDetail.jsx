@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { HiArrowLeft } from 'react-icons/hi';
 import { StatusBadge } from '@/components/admin/StatCard';
 import adminApi from '@/services/adminApi';
+import { formatCurrency } from '@/utils/currency';
 
 const STATUS_FLOW = ['pending', 'processing', 'shipped', 'delivered'];
 
@@ -82,6 +83,7 @@ export default function AdminOrderDetail() {
             <tr className="text-left text-xs text-ivory/40 border-b border-gold/10">
               <th className="px-6 py-3 font-normal">Item</th>
               <th className="px-6 py-3 font-normal">Qty</th>
+              <th className="px-6 py-3 font-normal text-right">Item Shipping</th>
               <th className="px-6 py-3 font-normal text-right">Total</th>
             </tr>
           </thead>
@@ -90,6 +92,7 @@ export default function AdminOrderDetail() {
               <tr key={item.sku} className="border-b border-gold/5 last:border-0">
                 <td className="px-6 py-3"><div className="flex items-center gap-3">{item.image ? <img src={item.image} alt={item.name} className="w-12 h-12 object-cover border border-gold/20" /> : <div className="w-12 h-12 bg-obsidian-light border border-gold/20" />}<span>{item.name} {item.variantLabel && <span className="text-ivory/40">({item.variantLabel})</span>}<span className="block text-xs text-ivory/40">{item.sku}</span></span></div></td>
                 <td className="px-6 py-3">{item.qty}</td>
+                <td className="px-6 py-3 text-right text-ivory/60">{item.shippingFee === null || item.shippingFee === undefined ? '—' : formatCurrency(item.shippingFee * item.qty)}</td>
                 <td className="px-6 py-3 text-right">${(item.price * item.qty).toFixed(2)}</td>
               </tr>
             ))}
@@ -169,7 +172,7 @@ function AddressBlock({ addr }) {
 function SummaryRow({ label, value, bold }) {
   return (
     <tr>
-      <td colSpan={2} className={`px-6 py-2 text-right ${bold ? 'font-semibold' : 'text-ivory/60'}`}>{label}</td>
+      <td colSpan={3} className={`px-6 py-2 text-right ${bold ? 'font-semibold' : 'text-ivory/60'}`}>{label}</td>
       <td className={`px-6 py-2 text-right ${bold ? 'font-semibold text-gold' : ''}`}>
         {value < 0 ? '−' : ''}${Math.abs(value).toFixed(2)}
       </td>

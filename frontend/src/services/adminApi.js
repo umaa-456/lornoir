@@ -16,6 +16,8 @@ export const adminApi = {
   reorderProductImages: (id, publicIds) => api.patch(`/products/${id}/images/order`, { publicIds }).then((r) => r.data),
   getLowStock: () => api.get('/products/low-stock').then((r) => r.data),
   listSaleProducts: () => api.get('/products/sale-options').then((r) => r.data),
+  listShippingProducts: (params) => api.get('/products/shipping-management', { params }).then((r) => r.data),
+  updateProductShippingFee: (id, shippingFee) => api.patch(`/products/${id}/shipping-fee`, { shippingFee }).then((r) => r.data),
 
   // Brands
   listBrands: () => api.get('/brands').then((r) => r.data),
