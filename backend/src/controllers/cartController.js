@@ -14,7 +14,7 @@ async function getOrCreateCart(userId) {
 
 function assertPurchasable(product) {
   if (product.stockStatus === 'coming_soon') throw ApiError.badRequest('This product is coming soon and cannot be ordered yet');
-  if (product.stockStatus === 'out_of_stock') throw ApiError.badRequest('This product is currently out of stock');
+  if (!(product.variants || []).some((variant) => variant.stock > 0)) throw ApiError.badRequest('This product is currently out of stock');
 }
 
 export const getCart = asyncHandler(async (req, res) => {

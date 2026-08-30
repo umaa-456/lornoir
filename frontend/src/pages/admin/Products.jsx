@@ -75,7 +75,7 @@ export default function AdminProducts() {
               <th className="px-6 py-3 font-normal">Brand</th>
               <th className="px-6 py-3 font-normal">Price</th>
               <th className="px-6 py-3 font-normal">Availability</th>
-              <th className="px-6 py-3 font-normal">Stock</th>
+              <th className="px-6 py-3 font-normal">Inventory</th>
               <th className="px-6 py-3 font-normal">Rating</th>
               <th className="px-6 py-3 font-normal text-right">Actions</th>
             </tr>
@@ -93,7 +93,7 @@ export default function AdminProducts() {
                 <td className="px-6 py-3 text-ivory/60">{p.brand?.name}</td>
                 <td className="px-6 py-3">{formatCurrency(p.basePrice)}</td>
                 <td className="px-6 py-3"><span className={`text-xs ${p.stockStatus === 'coming_soon' ? 'text-gold' : p.stockStatus === 'out_of_stock' ? 'text-ember-light' : 'text-primary'}`}>{p.stockStatus === 'coming_soon' ? 'Coming Soon' : p.stockStatus === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}</span></td>
-                <td className="px-6 py-3">{p.totalStock ?? '—'}</td>
+                <td className="px-6 py-3"><span>{p.availableStock ?? '—'} available</span><span className="block text-xs text-ivory/40">of {p.totalStock ?? '—'} total</span></td>
                 <td className="px-6 py-3 text-gold">{p.rating}★</td>
                 <td className="px-6 py-3">
                   <div className="flex justify-end gap-3 text-ivory/50">

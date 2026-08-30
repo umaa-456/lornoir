@@ -5,6 +5,7 @@ import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { uploadBuffer, destroyImage } from '../services/cloudinaryService.js';
 import { getActiveSalesByProductIds, withActiveSale } from '../utils/salePricing.js';
+import { withInventory } from '../utils/inventory.js';
 
 const SORT_MAP = {
   'price-asc': { basePrice: 1 },
@@ -53,7 +54,18 @@ export const listProducts = asyncHandler(async (req, res) => {
 
   if (minRating) filter.rating = { $gte: Number(minRating) };
   if (tag) filter.tags = tag;
-  if (['in_stock', 'out_of_stock', 'coming_soon'].includes(stockStatus)) filter.stockStatus = stockStatus;
+  // `coming_soon` is an admin-controlled state. The other two states are
+  // derived from current variant stock, and must be applied before pagination
+  // so the returned count and pages stay accurate.
+  if (stockStatus === 'coming_soon') filter.stockStatus = stockStatus;
+  if (stockStatus === 'in_stock') {
+    filter.stockStatus = { $ne: 'coming_soon' };
+    filter.variants = { $elemMatch: { stock: { $gt: 0 } } };
+  }
+  if (stockStatus === 'out_of_stock') {
+    filter.stockStatus = { $ne: 'coming_soon' };
+    filter.variants = { $not: { $elemMatch: { stock: { $gt: 0 } } } };
+  }
 
   const pageNum = Math.max(1, Number(page));
   const limitNum = Math.min(48, Number(limit));
@@ -71,7 +83,7 @@ export const listProducts = asyncHandler(async (req, res) => {
   const activeSales = await getActiveSalesByProductIds(products.map((product) => product._id));
   res.status(200).json({
     success: true,
-    products: products.map((product) => withActiveSale(product, activeSales)),
+    products: products.map(withInventory).map((product) => withActiveSale(product, activeSales)),
     pagination: {
       page: pageNum,
       limit: limitNum,
@@ -87,7 +99,7 @@ export const getProduct = asyncHandler(async (req, res) => {
     .populate('category', 'name slug');
   if (!product) throw ApiError.notFound('Product not found');
   const activeSales = await getActiveSalesByProductIds([product._id]);
-  res.status(200).json({ success: true, product: withActiveSale(product, activeSales) });
+  res.status(200).json({ success: true, product: withActiveSale(withInventory(product), activeSales) });
 });
 
 export const getAdminProduct = asyncHandler(async (req, res) => {
@@ -95,7 +107,7 @@ export const getAdminProduct = asyncHandler(async (req, res) => {
     .populate('brand', 'name slug')
     .populate('category', 'name slug');
   if (!product) throw ApiError.notFound('Product not found');
-  res.status(200).json({ success: true, product });
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 // Public, minimal availability projection for revalidating a browser cart.
@@ -104,7 +116,7 @@ export const getProductsAvailability = asyncHandler(async (req, res) => {
   if (!ids.length) return res.status(200).json({ success: true, products: [] });
   const products = await Product.find({ _id: { $in: ids }, isActive: true })
     .select('_id stockStatus variants.sku variants.stock');
-  res.status(200).json({ success: true, products });
+  res.status(200).json({ success: true, products: products.map(withInventory) });
 });
 
 export const getRelatedProducts = asyncHandler(async (req, res) => {
@@ -120,22 +132,42 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
     .populate('brand', 'name slug');
 
   const activeSales = await getActiveSalesByProductIds(related.map((item) => item._id));
-  res.status(200).json({ success: true, products: related.map((item) => withActiveSale(item, activeSales)) });
+  res.status(200).json({ success: true, products: related.map((item) => withActiveSale(withInventory(item), activeSales)) });
 });
 
 // ---------- Admin ----------
 
 export const createProduct = asyncHandler(async (req, res) => {
+  if (Array.isArray(req.body.variants)) {
+    req.body.variants = req.body.variants.map((variant) => ({
+      ...variant,
+      stock: Number(variant.stock),
+      totalStock: Number(variant.stock),
+    }));
+  }
+  if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
   const product = await Product.create(req.body);
-  res.status(201).json({ success: true, product });
+  res.status(201).json({ success: true, product: withInventory(product) });
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound('Product not found');
+  if (Array.isArray(req.body.variants)) {
+    const existing = new Map(product.variants.map((variant) => [variant.sku, variant]));
+    req.body.variants = req.body.variants.map((variant) => {
+      const requestedTotal = Number(variant.stock);
+      const current = existing.get(variant.sku);
+      if (!current) return { ...variant, stock: requestedTotal, totalStock: requestedTotal };
+      const priorTotal = Number(current.totalStock ?? current.stock);
+      const reserved = Math.max(0, priorTotal - Number(current.stock));
+      return { ...variant, stock: Math.max(0, requestedTotal - reserved), totalStock: requestedTotal };
+    });
+  }
+  if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
   product.set(req.body);
   await product.save();
-  res.status(200).json({ success: true, product });
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 export const reorderProductImages = asyncHandler(async (req, res) => {
@@ -196,7 +228,7 @@ export const getLowStockProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({ isActive: true }).populate('brand', 'name');
   const lowStock = products.filter((p) =>
     p.variants.some((v) => v.stock > 0 && v.stock <= p.lowStockThreshold)
-  );
+  ).map(withInventory);
   res.status(200).json({ success: true, products: lowStock });
 });
 

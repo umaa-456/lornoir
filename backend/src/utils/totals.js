@@ -6,6 +6,10 @@ export async function calculateCartTotals(cart) {
     ? (cart.coupon.type === 'percent' ? subtotal * (cart.coupon.value / 100) : Math.min(cart.coupon.value, subtotal))
     : 0;
   const settings = await SiteSettings.getSingleton();
-  const shipping = subtotal === 0 || settings.shipping?.freeShipping ? 0 : Number(settings.shipping?.fixedCharge || 0);
+  const configuredCharge = Number(settings.shipping?.fixedCharge);
+  if (!Number.isFinite(configuredCharge) || configuredCharge < 0) {
+    throw new Error('Shipping settings contain an invalid fixed charge');
+  }
+  const shipping = subtotal === 0 || settings.shipping?.freeShipping ? 0 : configuredCharge;
   return { subtotal, discount, shipping, total: Math.max(0, subtotal - discount + shipping) };
 }

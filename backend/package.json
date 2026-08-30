@@ -8,7 +8,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node src/utils/seed.js",
-    "migrate:sales": "node src/utils/migrateSales.js"
+    "migrate:sales": "node src/utils/migrateSales.js",
+    "migrate:inventory": "node src/utils/migrateInventory.js"
   },
   "dependencies": {
     "express": "^4.21.2",

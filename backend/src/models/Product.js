@@ -7,6 +7,10 @@ const variantSchema = new mongoose.Schema(
     sku: { type: String, required: true, unique: true },
     price: { type: Number, required: true, min: 0 },
     compareAtPrice: { type: Number, default: null },
+    // `stock` is the quantity currently available to sell. `totalStock` is
+    // the administrator's inventory ceiling, retained so the console can
+    // show both total and available stock after orders reserve units.
+    totalStock: { type: Number, min: 0, default: null },
     stock: { type: Number, required: true, min: 0, default: 0 },
   },
   { _id: false }
@@ -102,6 +106,10 @@ productSchema.virtual('totalStock').get(function totalStock() {
   // Product projections used by reviews and order history may deliberately
   // omit variants. Virtuals are still evaluated during serialization, so a
   // missing projection must mean "stock not selected", not a 500 response.
+  return (this.variants || []).reduce((sum, v) => sum + (v.totalStock ?? v.stock), 0);
+});
+
+productSchema.virtual('availableStock').get(function availableStock() {
   return (this.variants || []).reduce((sum, v) => sum + v.stock, 0);
 });
 

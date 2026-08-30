@@ -20,7 +20,7 @@ const DEFAULTS = {
   footerTagline:
     'A carefully curated collection of fashion, fragrances, natural products, traditional favorites, and premium essentials.',
   contact: { email: 'hello@arwastore.pk', phone: '+92 317 6346085', address: 'Pakistan' },
-  shipping: { freeShipping: true, fixedCharge: 0 },
+  shipping: { freeShipping: false, fixedCharge: 0 },
 };
 
 const SiteSettingsContext = createContext({ settings: DEFAULTS, loading: true, refresh: () => {} });

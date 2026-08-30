@@ -11,8 +11,9 @@ export default function AdminSettings() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const { settings, refresh } = useSiteSettings();
-  const [shipping, setShipping] = useState(settings.shipping || { freeShipping: true, fixedCharge: 0 });
-  const saveShipping = async (e) => { e.preventDefault(); try { await api.patch('/site-settings', { shipping: { ...shipping, fixedCharge: Number(shipping.fixedCharge || 0) } }); refresh(); toast.success('Shipping settings saved'); } catch { toast.error('Could not save shipping settings'); } };
+  const [shipping, setShipping] = useState(settings.shipping || { freeShipping: false, fixedCharge: 0 });
+  const [savingShipping, setSavingShipping] = useState(false);
+  const saveShipping = async (e) => { e.preventDefault(); setSavingShipping(true); try { await api.patch('/site-settings', { shipping: { ...shipping, fixedCharge: Number(shipping.fixedCharge || 0) } }); await refresh(); toast.success('Shipping settings saved'); } catch (err) { toast.error(err.response?.data?.message || 'Could not save shipping settings'); } finally { setSavingShipping(false); } };
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -80,10 +81,11 @@ export default function AdminSettings() {
       </form>
 
       <form onSubmit={saveShipping} className="glass p-6 space-y-4">
-        <p className="text-sm text-gold">Shipping</p>
+        <p className="text-sm text-gold">Shipping Settings</p>
+        <p className="text-xs text-ivory/50">Applied by the server to every new order. Existing orders keep their original shipping amount.</p>
         <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={shipping.freeShipping} onChange={(e) => setShipping((s) => ({ ...s, freeShipping: e.target.checked }))} /> Enable free shipping</label>
         <div><label className="block text-[11px] tracking-widest2 uppercase text-ivory/50 mb-2">Fixed shipping charge</label><input type="number" min="0" disabled={shipping.freeShipping} value={shipping.fixedCharge} onChange={(e) => setShipping((s) => ({ ...s, fixedCharge: e.target.value }))} className="w-full bg-transparent border border-gold/25 px-4 py-2.5 text-sm disabled:opacity-40" /></div>
-        <button className="px-6 py-2.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold">Save Shipping</button>
+        <button disabled={savingShipping} className="px-6 py-2.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-50">{savingShipping ? 'Saving…' : 'Save Shipping'}</button>
       </form>
 
       <form onSubmit={savePassword} className="glass p-6 space-y-4">

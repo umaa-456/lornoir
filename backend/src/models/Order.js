@@ -60,6 +60,9 @@ const orderSchema = new mongoose.Schema(
     statusHistory: { type: [statusHistorySchema], default: [] },
     trackingNumber: { type: String, default: null },
     cancelReason: { type: String, default: null },
+    // Guards the one-time stock restoration. It also means deleting an
+    // already-cancelled order can never restore stock a second time.
+    inventoryReleased: { type: Boolean, default: false },
     checkoutRating: { type: Number, min: 1, max: 5, default: null },
     subscribedAtCheckout: { type: Boolean, default: false },
   },

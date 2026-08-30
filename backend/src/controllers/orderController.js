@@ -13,6 +13,77 @@ import User from '../models/User.js';
 import { calculateCartTotals } from '../utils/totals.js';
 import { getActiveSalesByProductIds, salePrice } from '../utils/salePricing.js';
 
+async function reserveItems(items) {
+  const reserved = [];
+  for (const item of items) {
+    const result = await Product.updateOne(
+      { _id: item.product, isActive: true, stockStatus: { $ne: 'coming_soon' }, variants: { $elemMatch: { sku: item.sku, stock: { $gte: item.qty } } } },
+      { $inc: { 'variants.$.stock': -item.qty } }
+    );
+    if (result.modifiedCount !== 1) {
+      await Promise.all(reserved.map((reservedItem) => Product.updateOne(
+        { _id: reservedItem.product, 'variants.sku': reservedItem.sku },
+        { $inc: { 'variants.$.stock': reservedItem.qty } }
+      )));
+      throw ApiError.badRequest(`Sorry, only the currently available quantity can be ordered for ${item.name}. Please review your cart.`);
+    }
+    reserved.push(item);
+  }
+}
+
+async function releaseItems(items) {
+  // A product can be soft-deleted after an order; keep its historical record
+  // and restore stock if its variant still exists. A missing product/variant
+  // must not make cancellation fail or delete anything else.
+  await Promise.all(items.map((item) => Product.updateOne(
+    { _id: item.product, 'variants.sku': item.sku },
+    [{
+      $set: {
+        variants: {
+          $map: {
+            input: '$variants', as: 'variant', in: {
+              $cond: [
+                { $eq: ['$$variant.sku', item.sku] },
+                {
+                  $mergeObjects: [
+                    '$$variant',
+                    {
+                      stock: {
+                        $min: [
+                          { $add: ['$$variant.stock', item.qty] },
+                          { $ifNull: ['$$variant.totalStock', { $add: ['$$variant.stock', item.qty] }] },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                '$$variant',
+              ],
+            },
+          },
+        },
+      },
+    }]
+  )));
+}
+
+async function cancelAndReleaseOrder(orderId, reason) {
+  // The conditional update makes cancellation idempotent even when two admin
+  // requests arrive together. Only the request that flips the guard can
+  // restore inventory.
+  const order = await Order.findOneAndUpdate(
+    { _id: orderId, status: { $ne: 'cancelled' }, inventoryReleased: false },
+    {
+      $set: { status: 'cancelled', cancelReason: reason, inventoryReleased: true },
+      $push: { statusHistory: { status: 'cancelled', note: reason, changedAt: new Date() } },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!order) return null;
+  await releaseItems(order.items);
+  return order;
+}
+
 function generateOrderNumber() {
   const stamp = Date.now().toString(36).toUpperCase();
   const rand = crypto.randomBytes(2).toString('hex').toUpperCase();
@@ -62,9 +133,8 @@ export const createOrder = asyncHandler(async (req, res) => {
     const product = await Product.findOne({ _id: item.product, 'variants.sku': item.sku, isActive: true });
     if (!product) throw ApiError.badRequest(`${item.name} is no longer available`);
     if (product.stockStatus === 'coming_soon') throw ApiError.badRequest(`${item.name} is coming soon and cannot be ordered yet`);
-    if (product.stockStatus === 'out_of_stock') throw ApiError.badRequest(`${item.name} is currently out of stock. Please remove it from your cart before continuing.`);
     const variant = product.variants.find((v) => v.sku === item.sku);
-    if (variant.stock < item.qty) throw ApiError.badRequest(`Not enough stock for ${item.name}`);
+    if (variant.stock < item.qty) throw ApiError.badRequest(`Sorry, only ${variant.stock} units of ${item.name} are currently available.`);
   }
 
   // Reprice the authoritative server cart at checkout. A campaign may have
@@ -82,39 +152,39 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Repeat the availability predicates in the write. This prevents a stale
   // checkout from decrementing stock after an admin marks a product
   // unavailable or another customer purchases the final unit.
-  const decrements = await Promise.all(cart.items.map((item) => Product.updateOne(
-    {
-      _id: item.product,
-      isActive: true,
-      stockStatus: 'in_stock',
-      variants: { $elemMatch: { sku: item.sku, stock: { $gte: item.qty } } },
-    },
-    { $inc: { 'variants.$.stock': -item.qty } }
-  )));
-  if (decrements.some((result) => result.modifiedCount !== 1)) {
-    throw ApiError.badRequest('One or more products are no longer available. Please review your cart and try again.');
+  await reserveItems(cart.items);
+
+  let order;
+  let couponRecorded = false;
+  try {
+    const { subtotal, discount, shipping: shippingCost, total } = await calculateCartTotals(cart);
+    if (cart.coupon?.code) {
+      await Coupon.updateOne({ code: cart.coupon.code }, { $inc: { usedCount: 1 } });
+      couponRecorded = true;
+    }
+    order = await Order.create({
+      orderNumber: generateOrderNumber(),
+      user: req.user._id,
+      items: cart.items,
+      shippingAddress: snapshotAddress(shippingAddress),
+      billingAddress: snapshotAddress(billingAddress),
+      paymentMethod,
+      paymentStatus: paymentIntentStatus === 'succeeded' ? 'paid' : 'pending', // Stripe payments flip to 'paid' here (verified above) or via the webhook as a backup; COD stays pending until delivery.
+      stripePaymentIntentId: stripePaymentIntentId || null,
+      subtotal,
+      discount,
+      shippingCost,
+      total,
+      couponCode: cart.coupon?.code || null,
+      checkoutRating: Number(checkoutRating),
+      subscribedAtCheckout: Boolean(subscribe),
+      inventoryReleased: false,
+    });
+  } catch (error) {
+    if (couponRecorded) await Coupon.updateOne({ code: cart.coupon.code, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+    await releaseItems(cart.items);
+    throw error;
   }
-
-  const { subtotal, discount, shipping: shippingCost, total } = await calculateCartTotals(cart);
-  if (cart.coupon?.code) await Coupon.updateOne({ code: cart.coupon.code }, { $inc: { usedCount: 1 } });
-
-  const order = await Order.create({
-    orderNumber: generateOrderNumber(),
-    user: req.user._id,
-    items: cart.items,
-    shippingAddress: snapshotAddress(shippingAddress),
-    billingAddress: snapshotAddress(billingAddress),
-    paymentMethod,
-    paymentStatus: paymentIntentStatus === 'succeeded' ? 'paid' : 'pending', // Stripe payments flip to 'paid' here (verified above) or via the webhook as a backup; COD stays pending until delivery.
-    stripePaymentIntentId: stripePaymentIntentId || null,
-    subtotal,
-    discount,
-    shippingCost,
-    total,
-    couponCode: cart.coupon?.code || null,
-    checkoutRating: Number(checkoutRating),
-    subscribedAtCheckout: Boolean(subscribe),
-  });
 
   if (subscribe && !req.user.marketingSubscribed) {
     await User.updateOne({ _id: req.user._id }, { marketingSubscribed: true });
@@ -170,20 +240,10 @@ export const cancelOrder = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('This order can no longer be cancelled');
   }
 
-  order.status = 'cancelled';
-  order.cancelReason = req.body.reason || 'Cancelled by customer';
-  await order.save();
+  const cancelled = await cancelAndReleaseOrder(order._id, req.body.reason || 'Cancelled by customer');
+  if (!cancelled) throw ApiError.badRequest('This order was already cancelled');
 
-  await Promise.all(
-    order.items.map((item) =>
-      Product.updateOne(
-        { _id: item.product, 'variants.sku': item.sku },
-        { $inc: { 'variants.$.stock': item.qty } }
-      )
-    )
-  );
-
-  res.status(200).json({ success: true, order });
+  res.status(200).json({ success: true, order: cancelled });
 });
 
 // ---------- Admin ----------
@@ -214,6 +274,43 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) throw ApiError.notFound('Order not found');
 
   const statusChanged = status && status !== order.status;
+  if (statusChanged && status === 'cancelled') {
+    const cancelled = await cancelAndReleaseOrder(order._id, note || 'Cancelled by admin');
+    if (!cancelled) throw ApiError.badRequest('This order was already cancelled');
+    if (trackingNumber) {
+      cancelled.trackingNumber = trackingNumber;
+      await cancelled.save();
+    }
+    await Notification.create({
+      user: cancelled.user, type: 'order', title: 'Order status updated',
+      message: `Your Arwa Store order #${cancelled.orderNumber} is now cancelled.`, link: `/account/orders/${cancelled._id}`,
+    });
+    return res.status(200).json({ success: true, order: cancelled });
+  }
+
+  if (statusChanged && order.status === 'cancelled' && status !== 'cancelled') {
+    // If the existing workflow reopens a cancelled order, reserve stock once
+    // again before making it active. A failed reservation leaves it cancelled.
+    await reserveItems(order.items);
+    const reactivated = await Order.findOneAndUpdate(
+      { _id: order._id, status: 'cancelled', inventoryReleased: true },
+      {
+        $set: { status, inventoryReleased: false },
+        $push: { statusHistory: { status, note: note || 'Order reactivated by admin', changedAt: new Date() } },
+      }, { new: true }
+    );
+    if (!reactivated) {
+      await releaseItems(order.items);
+      throw ApiError.badRequest('Order status changed before it could be reactivated');
+    }
+    if (trackingNumber) {
+      reactivated.trackingNumber = trackingNumber;
+      await reactivated.save();
+    }
+    await Notification.create({ user: reactivated.user, type: 'order', title: 'Order status updated', message: `Your Arwa Store order #${reactivated.orderNumber} is now ${status}.`, link: `/account/orders/${reactivated._id}` });
+    return res.status(200).json({ success: true, order: reactivated });
+  }
+
   if (statusChanged) order.status = status;
   if (trackingNumber) order.trackingNumber = trackingNumber;
   if (note) order.statusHistory.push({ status, note, changedAt: new Date() });
@@ -237,4 +334,16 @@ export const refundOrder = asyncHandler(async (req, res) => {
   await order.save();
 
   res.status(200).json({ success: true, order });
+});
+
+export const deleteCancelledOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findOneAndDelete({ _id: req.params.id, status: 'cancelled' });
+  if (!order) {
+    const exists = await Order.exists({ _id: req.params.id });
+    if (exists) throw ApiError.badRequest('Only cancelled orders can be permanently deleted');
+    throw ApiError.notFound('Order not found');
+  }
+  // Stock was restored at cancellation and is guarded by inventoryReleased;
+  // deletion intentionally has no inventory mutation.
+  res.status(200).json({ success: true, message: 'Cancelled order permanently deleted' });
 });

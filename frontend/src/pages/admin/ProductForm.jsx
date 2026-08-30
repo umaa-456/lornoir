@@ -294,7 +294,7 @@ export default function AdminProductForm() {
         {/* Variants */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] tracking-widest2 uppercase text-ivory/50">Size Variants</p>
+              <p className="text-[11px] tracking-widest2 uppercase text-ivory/50">Variants & Total Stock</p>
             <button
               type="button"
               onClick={() => append({ label: '', sku: '', price: '', stock: '' })}
@@ -309,7 +309,7 @@ export default function AdminProductForm() {
                 <input placeholder="Label (50ml)" className={inputClass} {...register(`variants.${index}.label`, { required: true })} />
                 <input placeholder="SKU" className={inputClass} {...register(`variants.${index}.sku`, { required: true })} />
                 <input type="number" step="0.01" placeholder="Price" className={inputClass} {...register(`variants.${index}.price`, { required: true })} />
-                <input type="number" placeholder="Stock" className={inputClass} {...register(`variants.${index}.stock`, { required: true })} />
+                <input type="number" placeholder="Total stock" className={inputClass} {...register(`variants.${index}.stock`, { required: true })} />
                 <button
                   type="button"
                   onClick={() => fields.length > 1 && remove(index)}

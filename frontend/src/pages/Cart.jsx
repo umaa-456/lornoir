@@ -158,7 +158,7 @@ export default function Cart() {
             <div className="space-y-2 text-sm border-t border-gold/10 pt-5">
               <SummaryLine label="Subtotal" value={subtotal} currency={settings.currency} />
               {discount > 0 && <SummaryLine label="Discount" value={-discount} currency={settings.currency} />}
-              <SummaryLine label="Shipping" value={shipping} currency={settings.currency} freeLabel={shipping === 0} />
+              <SummaryLine label="Shipping" value={shipping} currency={settings.currency} freeLabel={Boolean(settings.shipping?.freeShipping)} />
               <div className="border-t border-gold/10 pt-3 mt-3">
                 <SummaryLine label="Total" value={total} currency={settings.currency} bold />
               </div>

@@ -252,7 +252,7 @@ export default function Checkout() {
           <div className="border-t border-gold/10 pt-4 space-y-2 text-sm">
             <div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>{formatCurrency(subtotal, settings.currency)}</span></div>
             {discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−{formatCurrency(discount, settings.currency)}</span></div>}
-            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{shipping === 0 ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
+            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{settings.shipping?.freeShipping ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
             <div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">{formatCurrency(total, settings.currency)}</span></div>
           </div>
         </div>

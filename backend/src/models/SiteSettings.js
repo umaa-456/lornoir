@@ -48,7 +48,7 @@ const siteSettingsSchema = new mongoose.Schema(
       address: { type: String, default: 'Pakistan' },
     },
     shipping: {
-      freeShipping: { type: Boolean, default: true },
+      freeShipping: { type: Boolean, default: false },
       fixedCharge: { type: Number, default: 0, min: 0 },
     },
   },

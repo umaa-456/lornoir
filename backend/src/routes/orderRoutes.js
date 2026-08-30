@@ -36,5 +36,6 @@ router.patch(
   orderController.updateOrderStatus
 );
 router.post('/:id/refund', restrictTo('admin'), orderController.refundOrder);
+router.delete('/:id', restrictTo('admin'), orderController.deleteCancelledOrder);
 
 export default router;

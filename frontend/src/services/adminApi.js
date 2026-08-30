@@ -37,6 +37,7 @@ export const adminApi = {
   listOrders: (params) => api.get('/orders', { params }).then((r) => r.data),
   getOrder: (id) => api.get(`/orders/${id}`).then((r) => r.data),
   updateOrderStatus: (id, payload) => api.patch(`/orders/${id}/status`, payload).then((r) => r.data),
+  deleteCancelledOrder: (id) => api.delete(`/orders/${id}`).then((r) => r.data),
   refundOrder: (id, payload) => api.post(`/orders/${id}/refund`, payload).then((r) => r.data),
 
   // Sales

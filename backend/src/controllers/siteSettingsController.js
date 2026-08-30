@@ -18,7 +18,14 @@ export const updateSiteSettings = asyncHandler(async (req, res) => {
   if (hero) settings.hero = { ...settings.hero.toObject(), ...hero };
   if (footerTagline !== undefined) settings.footerTagline = footerTagline;
   if (contact) settings.contact = { ...settings.contact.toObject(), ...contact };
-  if (shipping) settings.shipping = { ...settings.shipping.toObject(), ...shipping };
+  if (shipping) {
+    const fixedCharge = shipping.fixedCharge === undefined ? settings.shipping.fixedCharge : Number(shipping.fixedCharge);
+    if (!Number.isFinite(fixedCharge) || fixedCharge < 0) throw ApiError.badRequest('Shipping fee must be a non-negative number');
+    if (shipping.freeShipping !== undefined && typeof shipping.freeShipping !== 'boolean') {
+      throw ApiError.badRequest('Free shipping must be a boolean value');
+    }
+    settings.shipping = { ...settings.shipping.toObject(), ...shipping, fixedCharge };
+  }
 
   await settings.save();
   res.status(200).json({ success: true, settings });
