@@ -2,10 +2,10 @@ import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
 /**
- * The original product collection was deployed with a unique `name` index.
- * A product name is display data, not an identifier: different variants or
- * designs may legitimately share it. Mongoose does not remove indexes that
- * are no longer declared in a schema, so reconcile that legacy index here.
+ * Product display and merchandising data is deliberately non-unique. MongoDB
+ * retains indexes after a schema changes, so remove legacy unique Product
+ * indexes at startup. `slug` is the sole exception: it is an internal route
+ * identifier and the Product hook guarantees a unique value for it.
  */
 async function reconcileProductIndexes() {
   let indexes = [];
@@ -16,16 +16,16 @@ async function reconcileProductIndexes() {
     // will create it and establish the declared indexes.
     if (err.code !== 26) throw err;
   }
-  const legacyNameIndexes = indexes.filter((index) =>
-    index.unique &&
-    Object.keys(index.key).length === 1 &&
-    index.key.name === 1
-  );
+  const obsoleteUniqueIndexes = indexes.filter((index) => {
+    if (!index.unique || index.name === '_id_') return false;
+    const fields = Object.keys(index.key);
+    return !(fields.length === 1 && fields[0] === 'slug' && index.key.slug === 1);
+  });
 
-  for (const index of legacyNameIndexes) {
+  for (const index of obsoleteUniqueIndexes) {
     try {
       await Product.collection.dropIndex(index.name);
-      console.log(`Removed obsolete unique products index: ${index.name}`);
+      console.log(`Removed obsolete unique Product index: ${index.name}`);
     } catch (err) {
       // Multiple application instances can reconcile concurrently. If another
       // instance removed the index first, the desired state has been reached.
@@ -33,8 +33,7 @@ async function reconcileProductIndexes() {
     }
   }
 
-  // Keep the declared unique indexes for product URLs and variant SKUs in
-  // place, along with the catalogue query indexes defined on Product.
+  // Recreate the declared slug and catalogue query indexes after cleanup.
   await Product.createIndexes();
 }
 

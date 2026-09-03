@@ -15,6 +15,23 @@ const SORT_MAP = {
   featured: { createdAt: -1 },
 };
 
+// The model normally resolves a slug collision before saving. If two requests
+// create or rename the same product at precisely the same time, the unique
+// slug index is still the final arbiter. Retry only that race by clearing the
+// generated slug, which makes the model calculate the next available suffix.
+async function saveProductWithSlugRetry(product, attempts = 4) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      await product.save();
+      return product;
+    } catch (err) {
+      const duplicateSlug = err?.code === 11000 && (err.keyPattern?.slug || Object.hasOwn(err.keyValue || {}, 'slug'));
+      if (!duplicateSlug || attempt === attempts - 1) throw err;
+      product.slug = undefined;
+    }
+  }
+}
+
 export const listProducts = asyncHandler(async (req, res) => {
   const {
     q,
@@ -146,7 +163,8 @@ export const createProduct = asyncHandler(async (req, res) => {
     }));
   }
   if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
-  const product = await Product.create(req.body);
+  const product = new Product(req.body);
+  await saveProductWithSlugRetry(product);
   res.status(201).json({ success: true, product: withInventory(product) });
 });
 
@@ -166,7 +184,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
   if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
   product.set(req.body);
-  await product.save();
+  await saveProductWithSlugRetry(product);
   res.status(200).json({ success: true, product: withInventory(product) });
 });
 

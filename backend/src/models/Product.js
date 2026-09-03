@@ -4,7 +4,10 @@ import slugify from 'slugify';
 const variantSchema = new mongoose.Schema(
   {
     label: { type: String, required: true }, // e.g. "50ml"
-    sku: { type: String, required: true, unique: true },
+    // SKUs are merchant-supplied labels, not global product identifiers.
+    // The product id plus SKU identifies a cart/order line, so the same SKU
+    // can legitimately be used on more than one product.
+    sku: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
     compareAtPrice: { type: Number, default: null },
     // `stock` is the quantity currently available to sell. `totalStock` is
@@ -72,30 +75,6 @@ productSchema.pre('validate', async function setSlugAndPrice() {
       candidate = `${baseSlug}-${suffix++}`;
     }
     this.slug = candidate;
-  }
-  // A SKU still identifies a purchasable variant, but duplicating a product
-  // should not force an administrator to invent a new listing name. Preserve
-  // a supplied SKU where possible and suffix only conflicting variants.
-  if (this.variants?.length) {
-    // The database's unique index covers every product, but it cannot see a
-    // second duplicate SKU in the document currently being created. Track the
-    // candidates chosen in this request as well, so duplicated listings and
-    // multiple variants never fail with a raw E11000 error.
-    const usedInDocument = new Set();
-    for (const variant of this.variants) {
-      const baseSku = String(variant.sku || '').trim();
-      if (!baseSku) continue;
-      let candidate = baseSku;
-      let suffix = 2;
-      while (
-        usedInDocument.has(candidate) ||
-        await this.constructor.exists({ _id: { $ne: this._id }, 'variants.sku': candidate })
-      ) {
-        candidate = `${baseSku}-${suffix++}`;
-      }
-      usedInDocument.add(candidate);
-      variant.sku = candidate;
-    }
   }
   if (this.variants?.length) {
     this.basePrice = Math.min(...this.variants.map((v) => v.price));
