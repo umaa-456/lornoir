@@ -2,6 +2,7 @@ import Brand from '../models/Brand.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { uploadBuffer, destroyImage } from '../services/cloudinaryService.js';
+import { findOrCreateTaxonomy } from '../utils/findOrCreateTaxonomy.js';
 
 export const listBrands = asyncHandler(async (req, res) => {
   const brands = await Brand.find({ isActive: true }).sort('name');
@@ -15,8 +16,8 @@ export const getBrand = asyncHandler(async (req, res) => {
 });
 
 export const createBrand = asyncHandler(async (req, res) => {
-  const brand = await Brand.create(req.body);
-  res.status(201).json({ success: true, brand });
+  const { record: brand, created } = await findOrCreateTaxonomy(Brand, req.body);
+  res.status(created ? 201 : 200).json({ success: true, brand });
 });
 
 export const updateBrand = asyncHandler(async (req, res) => {

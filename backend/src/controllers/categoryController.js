@@ -2,6 +2,7 @@ import Category from '../models/Category.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { uploadBuffer, destroyImage } from '../services/cloudinaryService.js';
+import { findOrCreateTaxonomy } from '../utils/findOrCreateTaxonomy.js';
 
 export const listCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find({ isActive: true }).sort('name');
@@ -15,8 +16,8 @@ export const getCategory = asyncHandler(async (req, res) => {
 });
 
 export const createCategory = asyncHandler(async (req, res) => {
-  const category = await Category.create(req.body);
-  res.status(201).json({ success: true, category });
+  const { record: category, created } = await findOrCreateTaxonomy(Category, req.body);
+  res.status(created ? 201 : 200).json({ success: true, category });
 });
 
 export const updateCategory = asyncHandler(async (req, res) => {
