@@ -128,7 +128,7 @@ export default function ProductCard({ product }) {
 
         <Link to={`/product/${product.slug}`} data-cursor-hover className="mt-4 block">
           <p className="text-[11px] tracking-widest2 uppercase text-gold/70">{product.brand?.name}</p>
-          <h3 className="font-display text-lg mt-1 group-hover:text-gold transition-colors">{product.name}</h3>
+          <h3 className="font-display text-lg text-primary mt-1 line-clamp-2 min-h-[3.5rem] group-hover:text-gold transition-colors">{product.name}</h3>
           <div className="flex items-center gap-2 mt-1.5">
             <span className="flex items-center gap-0.5 text-gold text-xs">
               <HiStar /> {product.rating?.toFixed?.(1) ?? product.rating ?? '—'}
@@ -136,10 +136,11 @@ export default function ProductCard({ product }) {
             <span className="text-xs text-ivory/40">({product.reviewCount ?? 0})</span>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <span className="font-body text-sm">{formatCurrency(price, settings.currency)}</span>
             {onSale && (
               <span className="font-body text-xs text-ivory/40 line-through">{formatCurrency(regularPrice, settings.currency)}</span>
             )}
+            <span className={`font-body text-sm ${onSale ? 'text-ember-light font-semibold' : ''}`}>{formatCurrency(price, settings.currency)}</span>
+            {onSale && <span className="text-[10px] tracking-wide text-ember-light">{product.activeSale.discount}% OFF</span>}
           </div>
         </Link>
       </div>
