@@ -101,8 +101,9 @@ export default function QuickViewModal({ product, open, onClose }) {
               <div className="mt-8 flex flex-col gap-3">
                 <button
                   data-cursor-hover
-                  disabled={!defaultVariant || defaultVariant.stock === 0 || unavailable}
+                  disabled={!defaultVariant || unavailable || product.variants?.length > 1 || defaultVariant.stock === 0}
                   onClick={() => {
+                    if (product.variants?.length > 1) return;
                     addToCart(product, defaultVariant, 1);
                     onClose();
                   }}

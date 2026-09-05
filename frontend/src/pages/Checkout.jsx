@@ -1,286 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
 import toast from 'react-hot-toast';
 import FormField, { inputClass } from '@/components/ui/FormField';
-import StripePaymentForm from '@/components/checkout/StripePaymentForm';
 import { useCart } from '@/context/CartContext';
 import api from '@/services/api';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { formatCurrency } from '@/utils/currency';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
 const STEPS = ['Address', 'Subscription & Rating', 'Payment', 'Review'];
+const button = 'px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-50';
 
 export default function Checkout() {
   const { items, subtotal, discount, shipping, shippingConfigured, total, coupon, clearCart, revalidateCart } = useCart();
-  const { settings } = useSiteSettings();
-  const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [address, setAddress] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [clientSecret, setClientSecret] = useState(null);
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [preparingPayment, setPreparingPayment] = useState(false);
-  const [subscribe, setSubscribe] = useState(null);
-  const [checkoutRating, setCheckoutRating] = useState(0);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-
-  useEffect(() => {
-    if (paymentMethod === 'stripe' && step === 2 && !clientSecret) {
-      api
-        .post('/payments/create-intent')
-        .then(({ data }) => setClientSecret(data.clientSecret))
-        .catch(() => toast.error('Could not initialize payment — try Cash on Delivery instead'));
-    }
-  }, [paymentMethod, step, clientSecret]);
-
-  if (items.length === 0) return <Navigate to="/cart" replace />;
-
-  const submitAddress = (data) => {
-    setAddress(data);
-    setStep(1);
-  };
-
-  const continueToPayment = async () => {
-    if (subscribe === null || !checkoutRating) return;
-    setPreparingPayment(true);
-    try {
-      const unavailable = await revalidateCart();
-      if (unavailable.length) {
-        toast.error('This product is currently out of stock. Please review your bag.');
-        navigate('/cart');
-        return;
-      }
-      // Card payment intents are calculated from the server cart. Synchronise
-      // it before opening the payment step so shipping and totals are correct.
-      await api.delete('/cart');
-      for (const item of items) {
-        await api.post('/cart/items', { productId: item.productId, sku: item.sku, qty: item.qty });
-      }
-      setStep(2);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not prepare your checkout');
-    } finally {
-      setPreparingPayment(false);
-    }
-  };
-
-  const placeOrder = async (stripePaymentIntentId = null) => {
-    setPlacingOrder(true);
-    try {
-      const unavailable = await revalidateCart();
-      if (unavailable.length) {
-        toast.error('This product is currently out of stock. Please remove it from your cart before continuing.');
-        navigate('/cart');
-        return;
-      }
-      // Synchronize the guest-friendly local cart with the protected server
-      // cart so availability is authoritatively checked before ordering.
-      await api.delete('/cart');
-      for (const item of items) {
-        await api.post('/cart/items', { productId: item.productId, sku: item.sku, qty: item.qty });
-      }
-      const { data: addressRes } = await api.post('/addresses', { ...address, isDefault: true });
-      const { data: orderRes } = await api.post('/orders', {
-        shippingAddressId: addressRes.address._id,
-        paymentMethod,
-        stripePaymentIntentId,
-        subscribe,
-        checkoutRating,
-      });
-      clearCart();
-      navigate('/order-confirmed', { state: { order: orderRes.order } });
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not place order');
-    } finally {
-      setPlacingOrder(false);
-    }
-  };
-
-  return (
-    <div className="pt-32 pb-24 max-w-5xl mx-auto px-6 md:px-10">
-      <Helmet><title>Checkout — {settings.siteName}</title></Helmet>
-
-      <p className="eyebrow mb-3">Complete Your Order</p>
-      <h1 className="heading-display text-4xl mb-10">Checkout</h1>
-
-      <div className="flex gap-6 mb-12">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
-            <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs border ${
-                i <= step ? 'bg-gold text-obsidian border-gold font-semibold' : 'border-gold/25 text-ivory/40'
-              }`}
-            >
-              {i + 1}
-            </span>
-            <span className={`text-xs uppercase tracking-wide ${i <= step ? 'text-gold' : 'text-ivory/40'}`}>{label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-[1fr_340px] gap-12">
-        <div>
-          {step === 0 && (
-            <form onSubmit={handleSubmit(submitAddress)} className="space-y-5 max-w-lg">
-              <div className="grid sm:grid-cols-2 gap-5">
-                <FormField label="Full Name" error={errors.fullName?.message}>
-                  <input className={inputClass} {...register('fullName', { required: 'Required' })} />
-                </FormField>
-                <FormField label="Phone" error={errors.phone?.message}>
-                  <input className={inputClass} {...register('phone', { required: 'Required' })} />
-                </FormField>
-              </div>
-              <FormField label="Address Line 1" error={errors.line1?.message}>
-                <input className={inputClass} {...register('line1', { required: 'Required' })} />
-              </FormField>
-              <FormField label="Address Line 2">
-                <input className={inputClass} {...register('line2')} />
-              </FormField>
-              <div className="grid sm:grid-cols-3 gap-5">
-                <FormField label="City" error={errors.city?.message}>
-                  <input className={inputClass} {...register('city', { required: 'Required' })} />
-                </FormField>
-                <FormField label="State" error={errors.state?.message}>
-                  <input className={inputClass} {...register('state', { required: 'Required' })} />
-                </FormField>
-                <FormField label="Postal Code" error={errors.postalCode?.message}>
-                  <input className={inputClass} {...register('postalCode', { required: 'Required' })} />
-                </FormField>
-              </div>
-              <FormField label="Country" error={errors.country?.message}>
-                <input className={inputClass} {...register('country', { required: 'Required' })} />
-              </FormField>
-              <button
-                type="submit"
-                className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold"
-              >
-                Continue
-              </button>
-            </form>
-          )}
-
-          {step === 1 && (
-            <div className="max-w-lg space-y-6">
-              <div className="glass p-6 space-y-4">
-                <p className="font-display text-2xl">Stay in the Arwa circle</p>
-                <p className="text-sm text-ivory/60">Subscribe for new arrivals, exclusive offers and special discounts.</p>
-                <div className="flex gap-3"><button onClick={() => setSubscribe(true)} className={`px-4 py-2 border text-xs uppercase ${subscribe === true ? 'bg-gold text-obsidian border-gold' : 'border-gold/25'}`}>Subscribe</button><button onClick={() => setSubscribe(false)} className={`px-4 py-2 border text-xs uppercase ${subscribe === false ? 'bg-gold text-obsidian border-gold' : 'border-gold/25'}`}>No thanks</button></div>
-              </div>
-              <div className="glass p-6"><p className="font-display text-2xl">Rate your selection</p><p className="text-sm text-ivory/60 mt-2">Please give this order&apos;s products a quick rating before payment.</p><div className="flex gap-2 mt-4" aria-label="Product rating">{[1,2,3,4,5].map((rating) => <button key={rating} onClick={() => setCheckoutRating(rating)} className={`text-3xl ${rating <= checkoutRating ? 'text-gold' : 'text-ivory/25'}`} aria-label={`${rating} stars`}>★</button>)}</div></div>
-              <button onClick={continueToPayment} disabled={subscribe === null || !checkoutRating || preparingPayment} className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-40">{preparingPayment ? 'Preparing…' : 'Continue to Payment'}</button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="max-w-lg space-y-6">
-              <div className="flex gap-3">
-                <PaymentOption
-                  active={paymentMethod === 'cod'}
-                  onClick={() => setPaymentMethod('cod')}
-                  label="Cash on Delivery"
-                />
-                <PaymentOption
-                  active={paymentMethod === 'stripe'}
-                  onClick={() => setPaymentMethod('stripe')}
-                  label="Credit / Debit Card"
-                />
-              </div>
-
-              {paymentMethod === 'cod' && (
-                <button
-                  onClick={() => setStep(3)}
-                  className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold"
-                >
-                  Continue to Review
-                </button>
-              )}
-
-              {paymentMethod === 'stripe' &&
-                (clientSecret ? (
-                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-                    <StripePaymentForm onSuccess={(intentId) => placeOrder(intentId)} submitLabel={`Pay ${formatCurrency(total, settings.currency)}`} />
-                  </Elements>
-                ) : (
-                  <p className="text-ivory/50 text-sm">Preparing secure payment form…</p>
-                ))}
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="max-w-lg space-y-6">
-              <div className="glass p-5">
-                <p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-2">Deliver To</p>
-                <p className="text-sm text-ivory/80">{address.fullName}, {address.line1}, {address.city}, {address.state} {address.postalCode}, {address.country}</p>
-              </div>
-              <div className="glass p-5">
-                <p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-2">Payment</p>
-                <p className="text-sm text-ivory/80">Cash on Delivery</p>
-              </div>
-              <button
-                onClick={() => placeOrder(null)}
-                disabled={placingOrder}
-                className="px-8 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold disabled:opacity-50"
-              >
-                {placingOrder ? 'Placing Order…' : 'Place Order'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Order summary sidebar */}
-        <div className="glass p-6 h-fit space-y-4">
-          <p className="text-sm text-gold">Order Summary</p>
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-            {items.map((item) => (
-              <div key={item.lineId} className="flex justify-between text-xs text-ivory/60">
-                <span>{item.name} × {item.qty}</span>
-                <span>{formatCurrency(item.price * item.qty, settings.currency)}</span>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-gold/10 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>{formatCurrency(subtotal, settings.currency)}</span></div>
-            {discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−{formatCurrency(discount, settings.currency)}</span></div>}
-            <div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{!shippingConfigured ? 'Pending configuration' : shipping === 0 ? 'Free' : formatCurrency(shipping, settings.currency)}</span></div>
-            <div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">{formatCurrency(total, settings.currency)}</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const { settings } = useSiteSettings(); const navigate = useNavigate();
+  const [step, setStep] = useState(0); const [address, setAddress] = useState(null);
+  const [paymentType, setPaymentType] = useState('cod'); const [wallet, setWallet] = useState(null); const [transactionId, setTransactionId] = useState('');
+  const [placing, setPlacing] = useState(false); const [preparing, setPreparing] = useState(false); const [subscribe, setSubscribe] = useState(null); const [rating, setRating] = useState(0);
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const wallets = settings.paymentSettings || {}; const onlineAvailable = Object.keys(wallets).length > 0;
+  if (!items.length) return <Navigate to="/cart" replace />;
+  const syncCart = async () => { await api.delete('/cart'); for (const item of items) await api.post('/cart/items', { productId: item.productId, sku: item.sku, qty: item.qty }); };
+  const prepare = async () => { if (subscribe === null || !rating) return; setPreparing(true); try { const missing = await revalidateCart(); if (missing.length) { toast.error('This product is currently out of stock. Please review your bag.'); navigate('/cart'); return; } await syncCart(); setStep(2); } catch (e) { toast.error(e.response?.data?.message || 'Could not prepare your checkout'); } finally { setPreparing(false); } };
+  const reviewOnline = () => { if (!wallet) return toast.error('Please select JazzCash or Easypaisa'); if (!transactionId.trim()) return toast.error('Please enter your transaction ID or payment reference'); setStep(3); };
+  const placeOrder = async () => { const paymentMethod = paymentType === 'online' ? wallet : 'cod'; if (!paymentMethod) return reviewOnline(); setPlacing(true); try { const missing = await revalidateCart(); if (missing.length) { toast.error('This product is currently out of stock. Please review your bag.'); navigate('/cart'); return; } await syncCart(); const { data: addressResponse } = await api.post('/addresses', { ...address, isDefault: true }); const { data } = await api.post('/orders', { shippingAddressId: addressResponse.address._id, paymentMethod, transactionId: paymentMethod === 'cod' ? undefined : transactionId.trim(), subscribe, checkoutRating: rating }); clearCart(); navigate('/order-confirmed', { state: { order: data.order } }); } catch (e) { toast.error(e.response?.data?.message || 'Could not place order'); } finally { setPlacing(false); } };
+  const paymentLabel = paymentType === 'cod' ? 'Cash on Delivery' : wallet === 'jazzCash' ? 'JazzCash (manual verification)' : 'Easypaisa (manual verification)';
+  return <div className="pt-32 pb-24 max-w-5xl mx-auto px-6 md:px-10"><Helmet><title>Checkout — {settings.siteName}</title></Helmet><p className="eyebrow mb-3">Complete Your Order</p><h1 className="heading-display text-4xl mb-10">Checkout</h1>
+    <div className="flex gap-4 sm:gap-6 mb-12 overflow-x-auto">{STEPS.map((label, i) => <div key={label} className="flex items-center gap-2 shrink-0"><span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs border ${i <= step ? 'bg-gold text-obsidian border-gold font-semibold' : 'border-gold/25 text-ivory/40'}`}>{i + 1}</span><span className={`text-xs uppercase tracking-wide ${i <= step ? 'text-gold' : 'text-ivory/40'}`}>{label}</span></div>)}</div>
+    <div className="grid lg:grid-cols-[1fr_340px] gap-12"><div>
+      {step === 0 && <AddressForm register={register} errors={errors} onSubmit={handleSubmit((data) => { setAddress(data); setStep(1); })} />}
+      {step === 1 && <div className="max-w-lg space-y-6"><div className="glass p-6 space-y-4"><p className="font-display text-2xl">Stay in the Arwa circle</p><p className="text-sm text-ivory/60">Subscribe for new arrivals, exclusive offers and special discounts.</p><div className="flex gap-3"><Choice label="Subscribe" active={subscribe === true} onClick={() => setSubscribe(true)} /><Choice label="No thanks" active={subscribe === false} onClick={() => setSubscribe(false)} /></div></div><div className="glass p-6"><p className="font-display text-2xl">Rate your selection</p><p className="text-sm text-ivory/60 mt-2">Please give this order&apos;s products a quick rating before payment.</p><div className="flex gap-2 mt-4">{[1,2,3,4,5].map((value) => <button key={value} onClick={() => setRating(value)} className={`text-3xl ${value <= rating ? 'text-gold' : 'text-ivory/25'}`}>★</button>)}</div></div><button onClick={prepare} disabled={subscribe === null || !rating || preparing} className={button}>{preparing ? 'Preparing…' : 'Continue to Payment'}</button></div>}
+      {step === 2 && <div className="max-w-lg space-y-6"><div className="flex gap-3"><Choice label="Cash on Delivery" active={paymentType === 'cod'} onClick={() => setPaymentType('cod')} />{onlineAvailable && <Choice label="Online Payment" active={paymentType === 'online'} onClick={() => setPaymentType('online')} />}</div>{paymentType === 'cod' ? <button onClick={() => setStep(3)} className={button}>Continue to Review</button> : <WalletOptions wallets={wallets} wallet={wallet} setWallet={setWallet} transactionId={transactionId} setTransactionId={setTransactionId} onContinue={reviewOnline} />}</div>}
+      {step === 3 && <div className="max-w-lg space-y-6"><div className="glass p-5"><p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-2">Deliver To</p><p className="text-sm text-ivory/80">{address.fullName}, {address.line1}, {address.city}, {address.state} {address.postalCode}, {address.country}</p></div><div className="glass p-5"><p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-2">Payment</p><p className="text-sm text-ivory/80">{paymentLabel}</p>{paymentType === 'online' && <p className="text-xs text-ivory/50 mt-2">Reference: {transactionId}</p>}</div><button onClick={placeOrder} disabled={placing} className={button}>{placing ? 'Placing Order…' : 'Place Order'}</button></div>}
+    </div><Summary items={items} subtotal={subtotal} discount={discount} shipping={shipping} shippingConfigured={shippingConfigured} total={total} coupon={coupon} currency={settings.currency} /></div></div>;
 }
-
-function PaymentOption({ active, onClick, label }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 py-3.5 border text-xs uppercase tracking-wide transition-colors ${
-        active ? 'border-gold bg-gold text-obsidian font-semibold' : 'border-gold/25 text-ivory/60 hover:border-gold/60'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-const stripeAppearance = {
-  theme: 'flat',
-  variables: {
-    colorPrimary: '#123C35',
-    colorBackground: '#FFFFFF',
-    colorText: '#252525',
-    fontFamily: 'DM Sans, sans-serif',
-    borderRadius: '2px',
-  },
-};
+function AddressForm({ register, errors, onSubmit }) { return <form onSubmit={onSubmit} className="space-y-5 max-w-lg"><div className="grid sm:grid-cols-2 gap-5"><Field label="Full Name" error={errors.fullName?.message}><input className={inputClass} {...register('fullName', { required: 'Required' })} /></Field><Field label="Phone" error={errors.phone?.message}><input className={inputClass} {...register('phone', { required: 'Required' })} /></Field></div><Field label="Address Line 1" error={errors.line1?.message}><input className={inputClass} {...register('line1', { required: 'Required' })} /></Field><Field label="Address Line 2"><input className={inputClass} {...register('line2')} /></Field><div className="grid sm:grid-cols-3 gap-5">{['city','state','postalCode'].map((name) => <Field key={name} label={name === 'postalCode' ? 'Postal Code' : name[0].toUpperCase() + name.slice(1)} error={errors[name]?.message}><input className={inputClass} {...register(name, { required: 'Required' })} /></Field>)}</div><Field label="Country" error={errors.country?.message}><input className={inputClass} {...register('country', { required: 'Required' })} /></Field><button className={button}>Continue</button></form>; }
+function Field(props) { return <FormField {...props}>{props.children}</FormField>; }
+function Choice({ label, active, onClick }) { return <button onClick={onClick} className={`flex-1 py-3.5 border text-xs uppercase tracking-wide ${active ? 'border-gold bg-gold text-obsidian font-semibold' : 'border-gold/25 text-ivory/60 hover:border-gold/60'}`}>{label}</button>; }
+function WalletOptions({ wallets, wallet, setWallet, transactionId, setTransactionId, onContinue }) { const choices = [['jazzCash', 'JazzCash'], ['easypaisa', 'Easypaisa']].filter(([key]) => wallets[key]); return <div className="glass p-5 space-y-5"><div><p className="font-display text-2xl">Online Payment</p><p className="text-sm text-ivory/60 mt-1">Transfer the full order amount first, then enter the transaction reference. Payment is verified manually.</p></div><div className="space-y-3">{choices.map(([key, name]) => <button key={key} onClick={() => setWallet(key)} className={`w-full text-left border p-4 ${wallet === key ? 'border-gold bg-gold/10' : 'border-gold/25 hover:border-gold/60'}`}><p className="text-sm font-semibold">{name}</p><p className="text-xs text-ivory/60 mt-2">Send payment to: <span className="text-gold">{wallets[key].accountNumber}</span></p>{wallets[key].accountName && <p className="text-xs text-ivory/50 mt-1">Account holder: {wallets[key].accountName}</p>}{wallets[key].instructions && <p className="text-xs text-ivory/50 mt-1">{wallets[key].instructions}</p>}</button>)}</div>{wallet && <Field label="Transaction ID / Payment Reference"><input value={transactionId} onChange={(e) => setTransactionId(e.target.value)} maxLength={150} className={inputClass} placeholder="Enter reference after sending payment" /></Field>}<button onClick={onContinue} className={button}>Continue to Review</button></div>; }
+function Summary({ items, subtotal, discount, shipping, shippingConfigured, total, coupon, currency }) { return <div className="glass p-6 h-fit space-y-4"><p className="text-sm text-gold">Order Summary</p>{items.map((item) => <div key={item.lineId} className="flex justify-between text-xs text-ivory/60"><span>{item.name} × {item.qty}</span><span>{formatCurrency(item.price * item.qty, currency)}</span></div>)}<div className="border-t border-gold/10 pt-4 space-y-2 text-sm"><div className="flex justify-between text-ivory/60"><span>Subtotal</span><span>{formatCurrency(subtotal, currency)}</span></div>{discount > 0 && <div className="flex justify-between text-ivory/60"><span>Discount ({coupon?.code})</span><span>−{formatCurrency(discount, currency)}</span></div>}<div className="flex justify-between text-ivory/60"><span>Shipping</span><span>{!shippingConfigured ? 'Pending configuration' : shipping === 0 ? 'Free' : formatCurrency(shipping, currency)}</span></div><div className="flex justify-between font-semibold text-base border-t border-gold/10 pt-3"><span>Total</span><span className="text-gold">{formatCurrency(total, currency)}</span></div></div></div>; }

@@ -12,12 +12,13 @@ import { getStripe } from '../services/stripeService.js';
 import User from '../models/User.js';
 import { calculateCartTotals } from '../utils/totals.js';
 import { getActiveSalesByProductIds, salePrice } from '../utils/salePricing.js';
+import SiteSettings from '../models/SiteSettings.js';
 
 async function reserveItems(items) {
   const reserved = [];
   for (const item of items) {
     const result = await Product.updateOne(
-      { _id: item.product, isActive: true, stockStatus: { $ne: 'coming_soon' }, variants: { $elemMatch: { sku: item.sku, stock: { $gte: item.qty } } } },
+      { _id: item.product, isActive: true, stockStatus: { $ne: 'coming_soon' }, variants: { $elemMatch: { sku: item.sku, isActive: { $ne: false }, stock: { $gte: item.qty } } } },
       { $inc: { 'variants.$.stock': -item.qty } }
     );
     if (result.modifiedCount !== 1) {
@@ -104,7 +105,7 @@ function snapshotAddress(addr) {
 }
 
 export const createOrder = asyncHandler(async (req, res) => {
-  const { shippingAddressId, billingAddressId, paymentMethod, stripePaymentIntentId, checkoutRating, subscribe } = req.body;
+  const { shippingAddressId, billingAddressId, paymentMethod, stripePaymentIntentId, transactionId, checkoutRating, subscribe } = req.body;
 
   if (paymentMethod === 'stripe' && !stripePaymentIntentId) {
     throw ApiError.badRequest('Missing payment confirmation for card payment');
@@ -134,6 +135,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (!product) throw ApiError.badRequest(`${item.name} is no longer available`);
     if (product.stockStatus === 'coming_soon') throw ApiError.badRequest(`${item.name} is coming soon and cannot be ordered yet`);
     const variant = product.variants.find((v) => v.sku === item.sku);
+    if (variant.isActive === false) throw ApiError.badRequest(`${item.name} is no longer available`);
     if (variant.stock < item.qty) throw ApiError.badRequest(`Sorry, only ${variant.stock} units of ${item.name} are currently available.`);
   }
 
@@ -146,7 +148,19 @@ export const createOrder = asyncHandler(async (req, res) => {
   for (const item of cart.items) {
     const product = productsById.get(item.product.toString());
     const variant = product?.variants.find((value) => value.sku === item.sku);
-    if (variant) item.price = salePrice(variant.price, activeSales.get(product._id.toString()));
+    if (variant) {
+      item.price = salePrice(variant.price, activeSales.get(product._id.toString()));
+      item.variantLabel = variant.label;
+      item.image = (variant.imagePublicId ? product.images.find((image) => image.publicId === variant.imagePublicId)?.url : null) || product.images[0]?.url || null;
+    }
+  }
+
+  if (['jazzcash', 'easypaisa'].includes(paymentMethod)) {
+    const settings = await SiteSettings.getSingleton();
+    const configuredMethod = settings.paymentSettings?.[paymentMethod === 'jazzcash' ? 'jazzCash' : 'easypaisa'];
+    if (!configuredMethod?.enabled || !configuredMethod.accountNumber) {
+      throw ApiError.badRequest('This online payment method is currently unavailable');
+    }
   }
 
   const orderItems = cart.items.map((item) => {
@@ -174,7 +188,9 @@ export const createOrder = asyncHandler(async (req, res) => {
       shippingAddress: snapshotAddress(shippingAddress),
       billingAddress: snapshotAddress(billingAddress),
       paymentMethod,
-      paymentStatus: paymentIntentStatus === 'succeeded' ? 'paid' : 'pending', // Stripe payments flip to 'paid' here (verified above) or via the webhook as a backup; COD stays pending until delivery.
+      paymentStatus: paymentIntentStatus === 'succeeded' ? 'paid' : ['jazzcash', 'easypaisa'].includes(paymentMethod) ? 'submitted' : 'pending',
+      paymentProvider: ['jazzcash', 'easypaisa'].includes(paymentMethod) ? paymentMethod : null,
+      transactionId: ['jazzcash', 'easypaisa'].includes(paymentMethod) ? transactionId.trim() : null,
       stripePaymentIntentId: stripePaymentIntentId || null,
       subtotal,
       discount,
@@ -338,6 +354,18 @@ export const refundOrder = asyncHandler(async (req, res) => {
   order.statusHistory.push({ status: 'refunded', note: req.body.note || '', changedAt: new Date() });
   await order.save();
 
+  res.status(200).json({ success: true, order });
+});
+
+export const updatePaymentStatus = asyncHandler(async (req, res) => {
+  const { paymentStatus } = req.body;
+  const order = await Order.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+  if (!['jazzcash', 'easypaisa'].includes(order.paymentMethod)) {
+    throw ApiError.badRequest('Payment status can only be manually updated for online wallet orders');
+  }
+  order.paymentStatus = paymentStatus;
+  await order.save();
   res.status(200).json({ success: true, order });
 });
 

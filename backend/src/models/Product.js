@@ -8,6 +8,11 @@ const variantSchema = new mongoose.Schema(
     // The product id plus SKU identifies a cart/order line, so the same SKU
     // can legitimately be used on more than one product.
     sku: { type: String, required: true },
+    // A design is a sellable variant.  It may point at one image in the
+    // product gallery; inventory, SKU and that image therefore travel
+    // together without introducing a second stock model.
+    imagePublicId: { type: String, default: null },
+    isActive: { type: Boolean, default: true },
     price: { type: Number, required: true, min: 0 },
     compareAtPrice: { type: Number, default: null },
     // `stock` is the quantity currently available to sell. `totalStock` is
@@ -77,6 +82,10 @@ productSchema.pre('validate', async function setSlugAndPrice() {
     this.slug = candidate;
   }
   if (this.variants?.length) {
+    const skus = this.variants.map((variant) => variant.sku?.trim()).filter(Boolean);
+    if (new Set(skus).size !== skus.length) {
+      this.invalidate('variants', 'Each design must have a unique SKU within this product');
+    }
     this.basePrice = Math.min(...this.variants.map((v) => v.price));
   }
 });

@@ -13,6 +13,7 @@ import {
   HiOutlineExclamationCircle,
   HiOutlinePhotograph,
   HiOutlineCog,
+  HiOutlineCreditCard,
   HiOutlineLightningBolt,
   HiOutlineTruck,
   HiOutlineBell,
@@ -39,6 +40,7 @@ const NAV = [
   { to: '/admin/inventory', label: 'Inventory', icon: HiOutlineExclamationCircle },
   { to: '/admin/branding', label: 'Branding & Content', icon: HiOutlinePhotograph },
   { to: '/admin/settings', label: 'Settings', icon: HiOutlineCog },
+  { to: '/admin/payment-settings', label: 'Payment Settings', icon: HiOutlineCreditCard, adminOnly: true },
 ];
 
 export default function AdminLayout() {

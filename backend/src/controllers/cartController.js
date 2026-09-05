@@ -29,25 +29,31 @@ export const addToCart = asyncHandler(async (req, res) => {
   if (!product || !product.isActive) throw ApiError.notFound('Product not found');
   assertPurchasable(product);
 
-  const variant = product.variants.find((v) => v.sku === sku) || product.variants[0];
-  if (variant.stock < qty) throw ApiError.badRequest('Not enough stock available');
+  if (!sku) throw ApiError.badRequest('Please select a design before adding this product to your bag');
+  const variant = product.variants.find((v) => v.sku === sku);
+  if (!variant) throw ApiError.badRequest('The selected design is no longer available');
+  if (variant.isActive === false) throw ApiError.badRequest('This design is currently unavailable');
+  const requestedQty = Number(qty);
+  if (!Number.isInteger(requestedQty) || requestedQty < 1) throw ApiError.badRequest('Quantity must be at least 1');
+  if (variant.stock < requestedQty) throw ApiError.badRequest(`Only ${variant.stock} piece${variant.stock === 1 ? '' : 's'} of this design are available.`);
 
   const cart = await getOrCreateCart(req.user._id);
   const activeSales = await getActiveSalesByProductIds([product._id]);
   const price = salePrice(variant.price, activeSales.get(product._id.toString()));
-  const existing = cart.items.find((i) => i.sku === variant.sku);
+  const existing = cart.items.find((i) => i.product.toString() === product._id.toString() && i.sku === variant.sku);
 
   if (existing) {
-    existing.qty = Math.min(existing.qty + Number(qty), variant.stock);
+    if (existing.qty + requestedQty > variant.stock) throw ApiError.badRequest(`Only ${variant.stock} piece${variant.stock === 1 ? '' : 's'} of this design are available.`);
+    existing.qty += requestedQty;
   } else {
     cart.items.push({
       product: product._id,
       sku: variant.sku,
       name: product.name,
-      image: product.images[0]?.url || null,
+      image: (variant.imagePublicId ? product.images.find((image) => image.publicId === variant.imagePublicId)?.url : null) || product.images[0]?.url || null,
       variantLabel: variant.label,
       price,
-      qty: Math.min(Number(qty), variant.stock),
+      qty: requestedQty,
     });
   }
 
@@ -68,7 +74,7 @@ export const updateCartItem = asyncHandler(async (req, res) => {
   if (!product) throw ApiError.badRequest(`${item.name} is no longer available`);
   assertPurchasable(product);
   const variant = product.variants.find((v) => v.sku === sku);
-  if (!variant || variant.stock < qty) throw ApiError.badRequest(`Not enough stock available for ${item.name}`);
+  if (!variant || variant.isActive === false || variant.stock < qty) throw ApiError.badRequest(`Not enough stock available for ${item.name}`);
 
   const activeSales = await getActiveSalesByProductIds([product._id]);
   item.price = salePrice(variant.price, activeSales.get(product._id.toString()));

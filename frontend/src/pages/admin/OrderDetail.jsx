@@ -13,6 +13,7 @@ export default function AdminOrderDetail() {
   const [order, setOrder] = useState(null);
   const [tracking, setTracking] = useState('');
   const [saving, setSaving] = useState(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
 
   const load = () => {
     adminApi.getOrder(id).then((d) => {
@@ -47,6 +48,17 @@ export default function AdminOrderDetail() {
     }
   };
 
+  const updatePayment = async (paymentStatus) => {
+    setPaymentSaving(true);
+    try {
+      const d = await adminApi.updatePaymentStatus(id, paymentStatus);
+      setOrder(d.order);
+      toast.success(`Payment marked ${paymentStatus}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update payment status');
+    } finally { setPaymentSaving(false); }
+  };
+
   if (!order) return <p className="text-ivory/50">Loading order…</p>;
 
   return (
@@ -75,6 +87,16 @@ export default function AdminOrderDetail() {
           <p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-3">Billing Address</p>
           <AddressBlock addr={order.billingAddress} />
         </div>
+      </div>
+
+      <div className="glass p-5 rounded-sm">
+        <p className="text-xs text-ivory/40 uppercase tracking-widest2 mb-3">Payment</p>
+        <div className="space-y-2 text-sm text-ivory/70">
+          <p>Method: <span className="capitalize text-ivory">{order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod}</span></p>
+          <p className="flex items-center gap-2">Status: <StatusBadge status={order.paymentStatus} /></p>
+          {order.transactionId && <p>Transaction ID: <span className="text-gold break-all">{order.transactionId}</span></p>}
+        </div>
+        {['jazzcash', 'easypaisa'].includes(order.paymentMethod) && <div className="mt-4 flex flex-wrap gap-2">{['pending', 'submitted', 'verified', 'rejected'].map((status) => <button key={status} disabled={paymentSaving} onClick={() => updatePayment(status)} className={`px-3 py-2 text-xs uppercase border disabled:opacity-40 ${order.paymentStatus === status ? 'bg-gold text-obsidian border-gold font-semibold' : 'border-gold/25 text-ivory/65 hover:border-gold/60'}`}>{status}</button>)}</div>}
       </div>
 
       <div className="glass rounded-sm overflow-hidden">

@@ -46,8 +46,12 @@ const orderSchema = new mongoose.Schema(
     items: { type: [orderItemSchema], validate: (v) => v.length > 0 },
     shippingAddress: { type: addressSnapshotSchema, required: true },
     billingAddress: { type: addressSnapshotSchema, required: true },
-    paymentMethod: { type: String, enum: ['cod', 'stripe'], required: true },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },
+    // `stripe` and its historic statuses are retained for existing orders;
+    // new checkout orders use COD, JazzCash, or Easypaisa only.
+    paymentMethod: { type: String, enum: ['cod', 'stripe', 'jazzcash', 'easypaisa'], required: true },
+    paymentStatus: { type: String, enum: ['pending', 'submitted', 'verified', 'rejected', 'paid', 'failed', 'refunded'], default: 'pending' },
+    paymentProvider: { type: String, enum: ['jazzcash', 'easypaisa', null], default: null },
+    transactionId: { type: String, default: null, trim: true, maxlength: 150 },
     stripePaymentIntentId: { type: String, default: null },
     subtotal: { type: Number, required: true },
     discount: { type: Number, default: 0 },

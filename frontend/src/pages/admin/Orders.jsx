@@ -85,7 +85,7 @@ export default function AdminOrders() {
                 <td className="px-6 py-3 text-ivory/70">{order.user?.name}</td>
                 <td className="px-6 py-3 text-ivory/50">{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-3">${order.total.toFixed(2)}</td>
-                <td className="px-6 py-3"><StatusBadge status={order.paymentStatus} /></td>
+                <td className="px-6 py-3"><p className="capitalize text-xs text-ivory/70 mb-1">{order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod}</p><StatusBadge status={order.paymentStatus} /></td>
                 <td className="px-6 py-3"><StatusBadge status={order.status} /></td>
                 <td className="px-6 py-3 text-right">{order.status === 'cancelled' && <button onClick={() => setDeleting(order)} className="inline-flex p-2 text-ember-light hover:bg-ember/10" aria-label={`Delete cancelled order ${order.orderNumber}`} title="Permanently delete cancelled order"><HiOutlineTrash /></button>}</td>
               </tr>

@@ -28,6 +28,14 @@ export function CartProvider({ children }) {
       toast.error(product.stockStatus === 'coming_soon' ? 'This product is coming soon' : 'This product is currently out of stock');
       return;
     }
+    if (!variant?.sku) {
+      toast.error('Please select a design first');
+      return;
+    }
+    if (Number(qty) > Number(variant.stock || 0)) {
+      toast.error(`Only ${variant.stock} piece${variant.stock === 1 ? '' : 's'} of this design are available.`);
+      return;
+    }
     setItems((prev) => {
       const lineId = `${product._id}-${variant?.sku || 'default'}`;
       const existing = prev.find((i) => i.lineId === lineId);
@@ -42,7 +50,7 @@ export function CartProvider({ children }) {
           lineId,
           productId: product._id,
           name: product.name,
-          image: product.images?.[0]?.url || product.image,
+          image: variant?.image?.url || product.images?.[0]?.url || product.image,
           price: getSalePrice(product, variant?.price ?? product.price),
           variant: variant?.label || null,
           sku: variant?.sku || product.sku,
@@ -53,7 +61,7 @@ export function CartProvider({ children }) {
         },
       ];
     });
-    toast.success(`${product.name} added to bag`);
+    toast.success(`${variant.label} added to bag`);
   };
 
   const removeFromCart = (lineId) => {
@@ -79,7 +87,7 @@ export function CartProvider({ children }) {
         const product = productById.get(item.productId);
         const variant = product?.variants?.find((value) => value.sku === item.sku);
         const stockStatus = product?.stockStatus || 'out_of_stock';
-        const stock = variant?.stock ?? 0;
+        const stock = variant?.isActive === false ? 0 : (variant?.stock ?? 0);
         if (stockStatus !== 'in_stock' || stock < item.qty) unavailable.push(item.name);
         return { ...item, stockStatus, stock, shippingFee: product?.shippingFee ?? null };
       }));

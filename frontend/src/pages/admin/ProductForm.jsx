@@ -24,6 +24,7 @@ export default function AdminProductForm() {
     control,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors },
   } = useForm({
@@ -35,7 +36,7 @@ export default function AdminProductForm() {
       notes: { top: '', heart: '', base: '' },
       tags: [],
       stockStatus: 'in_stock',
-      variants: [{ label: '50ml', sku: '', price: '', stock: '' }],
+      variants: [{ label: '', sku: '', price: '', stock: '', imagePublicId: null }],
     },
   });
 
@@ -72,6 +73,9 @@ export default function AdminProductForm() {
     try {
       const result = await adminApi.deleteProductImage(id, image.publicId);
       setProductImages(result.product.images || []);
+      (watch('variants') || []).forEach((variant, index) => {
+        if (variant.imagePublicId === image.publicId) setValue(`variants.${index}.imagePublicId`, null);
+      });
       toast.success('Image removed');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not remove image');
@@ -105,15 +109,15 @@ export default function AdminProductForm() {
     // becomes NaN and fails Mongoose's schema validation server-side.
     for (const [i, v] of data.variants.entries()) {
       if (!v.label?.trim() || !v.sku?.trim()) {
-        toast.error(`Variant ${i + 1}: label and SKU are required`);
+        toast.error(`Design ${i + 1}: name and SKU are required`);
         return;
       }
       if (v.price === '' || Number.isNaN(Number(v.price)) || Number(v.price) < 0) {
-        toast.error(`Variant ${i + 1}: enter a valid price`);
+        toast.error(`Design ${i + 1}: enter a valid price`);
         return;
       }
       if (v.stock === '' || Number.isNaN(Number(v.stock)) || Number(v.stock) < 0) {
-        toast.error(`Variant ${i + 1}: enter a valid stock quantity`);
+        toast.error(`Design ${i + 1}: enter a valid stock quantity`);
         return;
       }
     }
@@ -197,6 +201,7 @@ export default function AdminProductForm() {
   };
 
   const selectedTags = watch('tags') || [];
+  const designTotalStock = (watch('variants') || []).reduce((total, variant) => total + Math.max(0, Number(variant.stock) || 0), 0);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -291,33 +296,34 @@ export default function AdminProductForm() {
           <p className="text-xs text-ivory/45 mt-2">This availability state controls storefront purchasing independently from variant quantities.</p>
         </FormField>
 
-        {/* Variants */}
+        {/* A variant is the sellable design/inventory record. */}
         <div>
           <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] tracking-widest2 uppercase text-ivory/50">Variants & Total Stock</p>
+              <div><p className="text-[11px] tracking-widest2 uppercase text-ivory/50">Product Designs / Stock</p><p className="text-xs text-ivory/40 mt-1">Each design has its own SKU, price and stock. Product total is calculated automatically.</p></div>
             <button
               type="button"
-              onClick={() => append({ label: '', sku: '', price: '', stock: '' })}
+              onClick={() => append({ label: '', sku: '', price: '', stock: '', imagePublicId: null })}
               className="flex items-center gap-1 text-xs text-gold hover:underline"
             >
-              <HiOutlinePlus /> Add variant
+              <HiOutlinePlus /> Add design
             </button>
           </div>
+          <p className="text-xs text-gold mb-3">Calculated total stock: {designTotalStock}</p>
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center glass p-3">
-                <input placeholder="Label (50ml)" className={inputClass} {...register(`variants.${index}.label`, { required: true })} />
-                <input placeholder="SKU" className={inputClass} {...register(`variants.${index}.sku`, { required: true })} />
-                <input type="number" step="0.01" placeholder="Price" className={inputClass} {...register(`variants.${index}.price`, { required: true })} />
-                <input type="number" placeholder="Total stock" className={inputClass} {...register(`variants.${index}.stock`, { required: true })} />
-                <button
-                  type="button"
-                  onClick={() => fields.length > 1 && remove(index)}
-                  className="text-ember-light hover:opacity-70 justify-self-end"
-                  aria-label="Remove variant"
-                >
-                  <HiOutlineTrash />
-                </button>
+              <div key={field.id} className="glass p-4">
+                <div className="flex items-center justify-between mb-3"><p className="text-xs text-gold">Design {index + 1}</p><button type="button" onClick={() => fields.length > 1 && remove(index)} className="text-ember-light hover:opacity-70" aria-label="Remove design"><HiOutlineTrash /></button></div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <input placeholder="Design name (Green Floral)" className={inputClass} {...register(`variants.${index}.label`, { required: true })} />
+                  <input placeholder="Unique SKU" className={inputClass} {...register(`variants.${index}.sku`, { required: true })} />
+                  <input type="number" step="0.01" placeholder="Price" className={inputClass} {...register(`variants.${index}.price`, { required: true })} />
+                  <input type="number" min="0" placeholder="Stock quantity" className={inputClass} {...register(`variants.${index}.stock`, { required: true })} />
+                  <select className={`${inputClass} sm:col-span-2`} {...register(`variants.${index}.imagePublicId`)}>
+                    <option value="">Choose this design&apos;s image (optional for legacy products)</option>
+                    {productImages.map((image, imageIndex) => <option key={image.publicId} value={image.publicId}>Image {imageIndex + 1}{image.alt ? ` — ${image.alt}` : ''}</option>)}
+                  </select>
+                </div>
+                {watch(`variants.${index}.imagePublicId`) && <p className="text-xs text-primary mt-2">Image linked to this sellable design.</p>}
               </div>
             ))}
           </div>
@@ -348,7 +354,7 @@ export default function AdminProductForm() {
             className="text-sm text-ivory/60"
           />
           {newImages.length > 0 && <p className="text-xs text-primary mt-2">{newImages.length} new image{newImages.length === 1 ? '' : 's'} ready to upload.</p>}
-          <p className="text-xs text-ivory/40 mt-1">The first image is the primary storefront image. Use the arrows to set its order; existing images remain until removed.</p>
+          <p className="text-xs text-ivory/40 mt-1">The first image remains the primary gallery image. After uploading new images, save once, then select each image in its design above and save again.</p>
         </FormField>
 
         <div className="flex gap-3 pt-4">

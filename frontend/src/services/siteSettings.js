@@ -6,4 +6,6 @@ export const siteSettingsApi = {
   uploadLogo: (formData) =>
     api.post('/site-settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data.settings),
   removeLogo: () => api.delete('/site-settings/logo').then((r) => r.data.settings),
+  getPaymentSettings: () => api.get('/site-settings/payment').then((r) => r.data.paymentSettings),
+  updatePaymentSettings: (payload) => api.patch('/site-settings/payment', payload).then((r) => r.data.paymentSettings),
 };

@@ -47,7 +47,7 @@ export default function ProductDetail() {
       .then((p) => {
         setProduct(p);
         setActiveImage(0);
-        setSelectedVariant(0);
+        setSelectedVariant(p.variants?.length === 1 ? 0 : null);
         setQty(1);
         recordView(slug);
       })
@@ -80,11 +80,16 @@ export default function ProductDetail() {
 
   if (!product) return <PageLoader />;
 
-  const variant = product.variants[selectedVariant];
+  const selectedDesign = selectedVariant === null ? null : product.variants[selectedVariant];
+  // Fallback only prevents an unselected multi-design product from being
+  // rendered as purchasable; add-to-cart still requires selectedDesign.
+  const variant = selectedDesign || { stock: 0, price: product.basePrice, sku: '' };
   const onSale = isOnActiveSale(product);
   const displayedPrice = getSalePrice(product, variant.price);
   const wishlisted = isWishlisted(product._id);
-  const images = product.images?.length ? product.images : [{ url: null }];
+  // A configured design owns its displayed image. Legacy products retain
+  // their gallery until images are mapped from the admin edit screen.
+  const images = variant?.image ? [variant.image] : (product.images?.length ? product.images : [{ url: null }]);
   const showGalleryControls = images.length > 1;
   const availability = product.stockStatus || 'in_stock';
   const unavailable = availability !== 'in_stock';
@@ -99,6 +104,7 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
+    if (!selectedDesign) { toast.error('Please select a design first'); return; }
     if (variant.stock === 0 || unavailable) return;
     addToCart(product, variant, qty);
   };
@@ -119,7 +125,7 @@ export default function ProductDetail() {
       url: typeof window !== 'undefined' ? window.location.href : undefined,
       priceCurrency: settings.currency || 'PKR',
       price: displayedPrice,
-      availability: !unavailable && variant.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability: !unavailable && variant?.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   };
 
@@ -210,17 +216,17 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-6 flex items-baseline gap-3">
-            <p className="text-2xl font-body">{formatCurrency(displayedPrice, settings.currency)}</p>
-            {onSale && <><span className="text-sm text-ivory/40 line-through">{formatCurrency(variant.price, settings.currency)}</span><span className="text-xs text-ember-light tracking-wide">{product.activeSale.discount}% OFF</span></>}
+            <p className="text-2xl font-body">{selectedDesign ? formatCurrency(displayedPrice, settings.currency) : `From ${formatCurrency(product.basePrice, settings.currency)}`}</p>
+            {onSale && selectedDesign && <><span className="text-sm text-ivory/40 line-through">{formatCurrency(variant.price, settings.currency)}</span><span className="text-xs text-ember-light tracking-wide">{product.activeSale.discount}% OFF</span></>}
           </div>
           <p className={`mt-3 text-sm font-medium ${unavailable ? 'text-ember-light' : 'text-primary'}`}>
             {availability === 'coming_soon' ? 'Coming Soon' : unavailable ? 'Out of Stock' : variant.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
           </p>
 
-          {/* Size / variant selector */}
+          {/* Each variant is one independently purchasable design. */}
           <div className="mt-8">
-            <p className="text-[11px] tracking-widest2 uppercase text-ivory/50 mb-3">Size</p>
-            <div className="flex gap-3 flex-wrap">
+            <p className="text-[11px] tracking-widest2 uppercase text-ivory/50 mb-3">Select Design</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {product.variants.map((v, i) => (
                 <button
                   key={v.sku}
@@ -228,20 +234,21 @@ export default function ProductDetail() {
                     setSelectedVariant(i);
                     setQty(1);
                   }}
+                  disabled={unavailable || v.isActive === false || v.stock < 1}
                   data-cursor-hover
-                  className={`px-5 py-2.5 border text-sm transition-colors ${
+                  className={`overflow-hidden border text-left transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${
                     selectedVariant === i
-                      ? 'border-gold bg-gold text-obsidian font-semibold'
+                      ? 'border-gold ring-1 ring-gold bg-gold/10'
                       : 'border-gold/25 text-ivory/70 hover:border-gold/60'
                   }`}
                 >
-                  {v.label}
+                  <div className="aspect-square bg-obsidian-light">{v.image?.url && <img src={v.image.url} alt={v.label} className="w-full h-full object-cover" />}</div>
+                  <span className="block px-3 pt-2 text-sm font-semibold">{v.label}</span>
+                  <span className={`block px-3 pb-3 text-xs mt-1 ${v.stock > 0 && v.isActive !== false ? 'text-primary' : 'text-ember-light'}`}>{v.isActive === false || v.stock === 0 ? 'Out of Stock' : v.stock === 1 ? 'Only 1 left' : `${v.stock} available`}</span>
                 </button>
               ))}
             </div>
-            <p className="text-xs text-ivory/40 mt-3">
-              {variant.stock > 5 ? 'In stock' : variant.stock > 0 ? `Only ${variant.stock} left` : 'Out of stock'}
-            </p>
+            {selectedDesign && <p className="text-xs text-ivory/40 mt-3">SKU: {variant.sku} · {variant.stock > 1 ? `${variant.stock} available` : variant.stock === 1 ? 'Only 1 left' : 'Out of stock'}</p>}
           </div>
 
           {/* Qty + add to cart */}
@@ -265,7 +272,7 @@ export default function ProductDetail() {
             </div>
             <button
               onClick={handleAddToCart}
-              disabled={variant.stock === 0 || unavailable}
+              disabled={!selectedDesign || variant.stock === 0 || unavailable}
               data-cursor-hover
               className="flex-1 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold hover:bg-gold-pale transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >

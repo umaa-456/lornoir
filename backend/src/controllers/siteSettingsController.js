@@ -5,7 +5,52 @@ import { uploadBuffer, destroyImage } from '../services/cloudinaryService.js';
 
 export const getSiteSettings = asyncHandler(async (req, res) => {
   const settings = await SiteSettings.getSingleton();
-  res.status(200).json({ success: true, settings });
+  const publicSettings = settings.toObject();
+  // Shoppers need only active wallet instructions. Disabled methods and the
+  // full administrative configuration are never sent to checkout clients.
+  publicSettings.paymentSettings = Object.fromEntries(
+    Object.entries(publicSettings.paymentSettings || {}).filter(([, method]) => method.enabled)
+  );
+  res.status(200).json({ success: true, settings: publicSettings });
+});
+
+const PAKISTANI_MOBILE = /^(?:03\d{9}|\+923\d{9}|923\d{9})$/;
+
+function normalizeWalletNumber(number) {
+  return String(number || '').replace(/[\s()-]/g, '');
+}
+
+function validateWallet(method, label) {
+  const enabled = Boolean(method?.enabled);
+  const accountNumber = normalizeWalletNumber(method?.accountNumber);
+  if (enabled && !accountNumber) throw ApiError.badRequest(`${label} account number is required when enabled`);
+  if (enabled && !PAKISTANI_MOBILE.test(accountNumber)) {
+    throw ApiError.badRequest(`${label} account number must be a valid Pakistani mobile number`);
+  }
+  if ((method?.accountName || '').length > 120) throw ApiError.badRequest(`${label} account holder name is too long`);
+  if ((method?.instructions || '').length > 600) throw ApiError.badRequest(`${label} instructions are too long`);
+  return { enabled, accountNumber, accountName: (method?.accountName || '').trim(), instructions: (method?.instructions || '').trim() };
+}
+
+export const getPaymentSettings = asyncHandler(async (req, res) => {
+  const settings = await SiteSettings.getSingleton();
+  res.status(200).json({ success: true, paymentSettings: settings.paymentSettings });
+});
+
+export const updatePaymentSettings = asyncHandler(async (req, res) => {
+  const { jazzCash, easypaisa } = req.body || {};
+  if (!jazzCash && !easypaisa) throw ApiError.badRequest('Provide JazzCash or Easypaisa payment settings');
+  const settings = await SiteSettings.getSingleton();
+  const current = settings.paymentSettings?.toObject?.() || {
+    jazzCash: { enabled: true, accountNumber: '', accountName: '', instructions: '' },
+    easypaisa: { enabled: true, accountNumber: '', accountName: '', instructions: '' },
+  };
+  settings.paymentSettings = {
+    jazzCash: jazzCash ? validateWallet({ ...current.jazzCash, ...jazzCash }, 'JazzCash') : current.jazzCash,
+    easypaisa: easypaisa ? validateWallet({ ...current.easypaisa, ...easypaisa }, 'Easypaisa') : current.easypaisa,
+  };
+  await settings.save();
+  res.status(200).json({ success: true, paymentSettings: settings.paymentSettings });
 });
 
 export const updateSiteSettings = asyncHandler(async (req, res) => {

@@ -47,6 +47,22 @@ const siteSettingsSchema = new mongoose.Schema(
       phone: { type: String, default: '+92 317 6346085' },
       address: { type: String, default: 'Pakistan' },
     },
+    // Manual wallet details are deliberately kept with the singleton site
+    // settings document so an administrator can change them without a deploy.
+    paymentSettings: {
+      jazzCash: {
+        enabled: { type: Boolean, default: true },
+        accountNumber: { type: String, default: '03111380517', trim: true },
+        accountName: { type: String, default: '', trim: true },
+        instructions: { type: String, default: '', trim: true },
+      },
+      easypaisa: {
+        enabled: { type: Boolean, default: true },
+        accountNumber: { type: String, default: '03111380517', trim: true },
+        accountName: { type: String, default: '', trim: true },
+        instructions: { type: String, default: '', trim: true },
+      },
+    },
   },
   { timestamps: true }
 );

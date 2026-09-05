@@ -11,7 +11,8 @@ router.post(
   '/',
   [
     body('shippingAddressId').notEmpty().withMessage('Shipping address is required'),
-    body('paymentMethod').isIn(['cod', 'stripe']).withMessage('Invalid payment method'),
+    body('paymentMethod').isIn(['cod', 'jazzcash', 'easypaisa']).withMessage('Invalid payment method'),
+    body('transactionId').if((value, { req }) => ['jazzcash', 'easypaisa'].includes(req.body.paymentMethod)).trim().notEmpty().withMessage('Transaction ID / payment reference is required').isLength({ max: 150 }).withMessage('Transaction ID / payment reference is too long'),
     body('checkoutRating').isInt({ min: 1, max: 5 }).withMessage('A rating from 1 to 5 is required'),
     body('subscribe').isBoolean().withMessage('Subscription choice is required'),
   ],
@@ -34,6 +35,13 @@ router.patch(
   ],
   validate,
   orderController.updateOrderStatus
+);
+router.patch(
+  '/:id/payment',
+  restrictTo('admin', 'employee'),
+  [body('paymentStatus').isIn(['pending', 'submitted', 'verified', 'rejected']).withMessage('Invalid payment status')],
+  validate,
+  orderController.updatePaymentStatus
 );
 router.post('/:id/refund', restrictTo('admin'), orderController.refundOrder);
 router.delete('/:id', restrictTo('admin'), orderController.deleteCancelledOrder);

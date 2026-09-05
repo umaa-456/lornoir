@@ -44,7 +44,7 @@ export default function AdminInventory() {
                 .filter((v) => v.stock > 0 && v.stock <= product.lowStockThreshold)
                 .map((v) => (
                   <span key={v.sku} className="px-2.5 py-1 bg-ember/15 text-ember-light rounded-full">
-                    {v.label}: {v.stock} left
+                    {v.label} · {v.sku}: {v.stock} left
                   </span>
                 ))}
             </div>

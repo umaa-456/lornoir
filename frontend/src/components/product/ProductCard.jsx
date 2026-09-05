@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiHeart, HiOutlineHeart, HiOutlineEye, HiStar } from 'react-icons/hi';
 import { useWishlist } from '@/context/WishlistContext';
@@ -17,6 +17,7 @@ export default function ProductCard({ product }) {
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { settings } = useSiteSettings();
+  const navigate = useNavigate();
   const wishlisted = isWishlisted(product._id);
 
   const image = productImage(product);
@@ -39,6 +40,10 @@ export default function ProductCard({ product }) {
   const handleMouseLeave = () => setTilt({ rx: 0, ry: 0 });
 
   const handleQuickAdd = () => {
+    if (product.variants?.length > 1) {
+      navigate(`/product/${product.slug}`);
+      return;
+    }
     if (!defaultVariant) return;
     addToCart(product, defaultVariant, 1);
   };
@@ -114,10 +119,10 @@ export default function ProductCard({ product }) {
           <button
             data-cursor-hover
             onClick={handleQuickAdd}
-            disabled={!defaultVariant || defaultVariant.stock === 0 || unavailable}
+            disabled={!defaultVariant || unavailable || (product.variants?.length <= 1 && defaultVariant.stock === 0)}
             className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-obsidian/90 backdrop-blur-sm text-ivory text-[11px] tracking-widest2 uppercase py-3 hover:bg-gold hover:text-obsidian disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : defaultVariant?.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
+            {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : product.variants?.length > 1 ? 'Select Design' : defaultVariant?.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
           </button>
         </div>
 

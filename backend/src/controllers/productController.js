@@ -32,6 +32,15 @@ async function saveProductWithSlugRetry(product, attempts = 4) {
   }
 }
 
+function validateDesignImages(variants, images) {
+  const imageIds = new Set((images || []).map((image) => image.publicId));
+  for (const variant of variants || []) {
+    if (variant.imagePublicId && !imageIds.has(variant.imagePublicId)) {
+      throw ApiError.badRequest(`The image selected for design "${variant.label}" is not in this product gallery`);
+    }
+  }
+}
+
 export const listProducts = asyncHandler(async (req, res) => {
   const {
     q,
@@ -132,7 +141,7 @@ export const getProductsAvailability = asyncHandler(async (req, res) => {
   const ids = String(req.query.ids || '').split(',').filter((id) => /^[a-f\d]{24}$/i.test(id));
   if (!ids.length) return res.status(200).json({ success: true, products: [] });
   const products = await Product.find({ _id: { $in: ids }, isActive: true })
-    .select('_id stockStatus shippingFee variants.sku variants.stock');
+    .select('_id stockStatus shippingFee variants.sku variants.stock variants.isActive');
   res.status(200).json({ success: true, products: products.map(withInventory) });
 });
 
@@ -162,6 +171,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       totalStock: Number(variant.stock),
     }));
   }
+  validateDesignImages(req.body.variants, req.body.images);
   if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
   const product = new Product(req.body);
   await saveProductWithSlugRetry(product);
@@ -182,6 +192,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
       return { ...variant, stock: Math.max(0, requestedTotal - reserved), totalStock: requestedTotal };
     });
   }
+  if (Array.isArray(req.body.variants)) validateDesignImages(req.body.variants, product.images);
   if (req.body.stockStatus === 'out_of_stock') delete req.body.stockStatus;
   product.set(req.body);
   await saveProductWithSlugRetry(product);
@@ -201,7 +212,7 @@ export const reorderProductImages = asyncHandler(async (req, res) => {
   }
   product.images = requestedIds.map((publicId) => imageMap.get(publicId));
   await product.save();
-  res.status(200).json({ success: true, product });
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
@@ -226,7 +237,7 @@ export const uploadProductImages = asyncHandler(async (req, res) => {
   product.images.push(...images);
   await product.save();
 
-  res.status(200).json({ success: true, product });
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 export const deleteProductImage = asyncHandler(async (req, res) => {
@@ -237,9 +248,14 @@ export const deleteProductImage = asyncHandler(async (req, res) => {
   if (image) await destroyImage(image.publicId);
 
   product.images = product.images.filter((img) => img.publicId !== req.params.publicId);
+  // Do not leave a design pointing to a deleted gallery image. Its inventory
+  // remains intact; the admin can associate a replacement image on edit.
+  product.variants.forEach((variant) => {
+    if (variant.imagePublicId === req.params.publicId) variant.imagePublicId = null;
+  });
   await product.save();
 
-  res.status(200).json({ success: true, product });
+  res.status(200).json({ success: true, product: withInventory(product) });
 });
 
 export const getLowStockProducts = asyncHandler(async (req, res) => {
