@@ -34,7 +34,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { settings } = useSiteSettings();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isHomeHero = pathname === '/' && !scrolled;
@@ -70,38 +70,34 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         isHomeHero ? 'bg-transparent py-3.5 text-white' : 'glass py-3.5 shadow-glass text-ivory'
       }`}
     >
-      <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-5 md:px-8 xl:grid xl:grid-cols-[minmax(6rem,1fr)_auto_minmax(21rem,1fr)] xl:gap-6">
-        {/* Mobile menu toggle */}
-        <button
-          className="xl:hidden shrink-0 text-2xl text-gold"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
-        </button>
-
-        {/* Wordmark */}
-        <Link
-          to="/"
-          className="flex min-w-0 items-center gap-2 select-none xl:justify-self-start"
-          data-cursor-hover
-        >
-          {!logoFailed ? (
-            <img
-              src={STORE_LOGO_PATH}
-              alt={settings.siteName}
-              className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-10 md:max-w-[11rem] xl:h-11"
-              onError={() => setLogoFailed(true)}
-            />
-          ) : (
-            <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
-              {settings.siteName}
-            </span>
-          )}
-        </Link>
+      <div className="mx-auto grid max-w-[100rem] grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 px-4 sm:px-5 md:px-8 xl:grid-cols-[minmax(7rem,1fr)_auto_minmax(23rem,1fr)] xl:gap-6">
+        {/* Brand and drawer control stay together at the left at every width. */}
+        <div className="flex flex-col items-start gap-1.5 xl:justify-self-start">
+          <Link to="/" className="flex min-w-0 items-center select-none" data-cursor-hover>
+            {!logoFailed ? (
+              <img
+                src={STORE_LOGO_PATH}
+                alt={settings.siteName}
+                className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] xl:h-10"
+                onError={() => setLogoFailed(true)}
+              />
+            ) : (
+              <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
+                {settings.siteName}
+              </span>
+            )}
+          </Link>
+          <button
+            className="flex h-5 items-center text-xl text-gold transition-colors hover:text-gold-pale"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
+          </button>
+        </div>
 
         {/* Desktop nav */}
-        <nav className="hidden min-w-max xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
+        <nav className="hidden min-w-max self-center xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
           {NAV_LINKS.map((link) => (
             <div key={link.label} className="relative group">
               <NavLink
@@ -129,7 +125,33 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </nav>
 
         {/* Icons */}
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-3 text-xl sm:gap-4 xl:min-w-max xl:justify-self-end xl:gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-2 pt-1 text-xl sm:gap-x-3 xl:min-w-max xl:justify-self-end xl:self-center xl:pt-0">
+          {!loading && !isAuthenticated && (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link
+                to="/login"
+                className={`inline-flex h-8 items-center whitespace-nowrap rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.12em] uppercase transition-colors duration-200 sm:px-3 ${
+                  isHomeHero
+                    ? 'border-white/70 bg-black/15 text-white hover:border-gold hover:bg-gold hover:text-obsidian'
+                    : 'border-gold/70 bg-obsidian/5 text-ivory hover:border-gold hover:bg-gold hover:text-obsidian'
+                }`}
+                data-cursor-hover
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className={`inline-flex h-8 items-center whitespace-nowrap rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.12em] uppercase transition-colors duration-200 sm:px-3 ${
+                  isHomeHero
+                    ? 'border-white/70 bg-black/15 text-white hover:border-gold hover:bg-gold hover:text-obsidian'
+                    : 'border-gold/70 bg-obsidian/5 text-ivory hover:border-gold hover:bg-gold hover:text-obsidian'
+                }`}
+                data-cursor-hover
+              >
+                Create Account
+              </Link>
+            </div>
+          )}
           <button
             aria-label="Search products"
             className="hover:text-gold transition-colors"
@@ -148,7 +170,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           </button>
           {isAuthenticated ? (
             <>
-              <Link to="/account" aria-label="My account" className="hidden sm:inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
+              <Link to="/account" aria-label="My account" className="inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
                 <HiOutlineUser />
               </Link>
               <Link
@@ -168,23 +190,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 Logout
               </button>
             </>
-          ) : (
-            <>
-              <Link to="/login" aria-label="Login" className="hidden sm:inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
-                <HiOutlineUser />
-              </Link>
-              <Link to="/login" className="hidden xl:block shrink-0 text-xs tracking-wide hover:text-gold transition-colors" data-cursor-hover>
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="hidden xl:inline-flex shrink-0 items-center border border-gold/50 px-3 py-1.5 text-[10px] font-semibold tracking-[0.13em] uppercase text-gold transition-colors hover:bg-gold/10 hover:text-gold-deep"
-                data-cursor-hover
-              >
-                Create Account
-              </Link>
-            </>
-          )}
+          ) : null}
           <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
             <HiOutlineHeart />
             {wishlistCount > 0 && <CountBadge count={wishlistCount} />}
@@ -204,7 +210,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="xl:hidden overflow-hidden glass mt-3 mx-4 rounded-sm"
+            className="overflow-hidden glass mt-3 mx-4 rounded-sm"
           >
             <ul className="flex flex-col divide-y divide-gold/10">
               {NAV_LINKS.map((link) => (
@@ -233,8 +239,8 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   ))}
                 </li>
               ))}
-              <li className="px-6 py-4">
-                {isAuthenticated ? (
+              {isAuthenticated && (
+                <li className="px-6 py-4">
                   <div className="flex items-center justify-between gap-4">
                     <Link to="/account" onClick={() => setMobileOpen(false)} className="min-w-0 text-sm text-ivory/85 hover:text-gold">
                       <span className="block truncate">{user?.name}</span>
@@ -244,13 +250,8 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                       Logout
                     </button>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-5 text-xs tracking-widest2 uppercase">
-                    <Link to="/login" onClick={() => setMobileOpen(false)} className="text-ivory/85 hover:text-gold">Login</Link>
-                    <Link to="/signup" onClick={() => setMobileOpen(false)} className="text-gold hover:text-ivory">Create Account</Link>
-                  </div>
-                )}
-              </li>
+                </li>
+              )}
             </ul>
           </motion.nav>
         )}
