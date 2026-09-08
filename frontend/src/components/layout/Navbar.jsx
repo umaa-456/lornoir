@@ -27,7 +27,6 @@ const NAV_LINKS = [
 const STORE_LOGO_PATH = '/icons/arwa-icon-512.png';
 
 export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -37,22 +36,14 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isHomeHero = pathname === '/' && !scrolled;
   const isCollectionsRoute = pathname === '/shop' || pathname.startsWith('/product/');
 
   const navLinkClass = (isActive) =>
     `relative font-body text-[11px] tracking-[0.16em] uppercase transition-colors duration-300 after:content-[''] after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-gold after:transition-all after:duration-300 ${
       isActive
         ? 'text-gold after:w-full'
-        : `${isHomeHero ? 'text-white/90 hover:text-gold' : 'text-ivory/80 hover:text-gold'} after:w-0 hover:after:w-full`
+        : 'text-white/85 hover:text-gold after:w-0 hover:after:w-full'
     }`;
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -65,12 +56,8 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   }, []);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isHomeHero ? 'bg-transparent py-3.5 text-white' : 'glass py-3.5 shadow-glass text-ivory'
-      }`}
-    >
-      <div className="mx-auto grid max-w-[100rem] grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 px-4 sm:px-5 md:px-8 xl:grid-cols-[minmax(7rem,1fr)_auto_minmax(23rem,1fr)] xl:gap-6">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-gold/25 bg-primary/95 py-3 text-white shadow-[0_10px_30px_-20px_rgba(18,60,53,0.9)] backdrop-blur-md transition-all duration-300">
+      <div className="mx-auto grid max-w-[100rem] grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 px-4 sm:px-5 md:px-8 xl:grid-cols-[minmax(8rem,1fr)_auto_minmax(25rem,1fr)] xl:gap-6">
         {/* Brand and drawer control stay together at the left at every width. */}
         <div className="flex flex-col items-start gap-1.5 xl:justify-self-start">
           <Link to="/" className="flex min-w-0 items-center select-none" data-cursor-hover>
@@ -78,7 +65,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               <img
                 src={STORE_LOGO_PATH}
                 alt={settings.siteName}
-                className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] xl:h-10"
+                className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] lg:h-10"
                 onError={() => setLogoFailed(true)}
               />
             ) : (
@@ -88,7 +75,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             )}
           </Link>
           <button
-            className="flex h-5 items-center text-xl text-gold transition-colors hover:text-gold-pale"
+            className="flex h-6 w-7 items-center justify-start rounded-sm border border-gold/30 pl-1 text-xl text-gold transition-colors duration-200 hover:border-gold hover:bg-gold/10 hover:text-gold-pale"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             onClick={() => setMobileOpen((v) => !v)}
           >
@@ -124,28 +111,20 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           ))}
         </nav>
 
-        {/* Icons */}
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-2 pt-1 text-xl sm:gap-x-3 xl:min-w-max xl:justify-self-end xl:self-center xl:pt-0">
+        {/* Utility controls become a deliberate second row on compact screens. */}
+        <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-2 pt-0.5 text-xl sm:gap-x-3 xl:col-start-3 xl:min-w-max xl:flex-nowrap xl:justify-self-end xl:self-center xl:pt-0">
           {!loading && !isAuthenticated && (
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="order-last flex basis-full items-center justify-end gap-2 border-t border-gold/20 pt-2 sm:gap-2.5 xl:order-none xl:basis-auto xl:border-0 xl:pt-0">
               <Link
                 to="/login"
-                className={`inline-flex h-8 items-center whitespace-nowrap rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.12em] uppercase transition-colors duration-200 sm:px-3 ${
-                  isHomeHero
-                    ? 'border-white/70 bg-black/15 text-white hover:border-gold hover:bg-gold hover:text-obsidian'
-                    : 'border-gold/70 bg-obsidian/5 text-ivory hover:border-gold hover:bg-gold hover:text-obsidian'
-                }`}
+                className="inline-flex h-9 items-center whitespace-nowrap rounded-md border border-gold/80 bg-primary/20 px-3 text-[10px] font-semibold tracking-[0.12em] uppercase text-white transition-colors duration-200 hover:border-gold hover:bg-[#C9A45C] hover:text-primary sm:px-3.5"
                 data-cursor-hover
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className={`inline-flex h-8 items-center whitespace-nowrap rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.12em] uppercase transition-colors duration-200 sm:px-3 ${
-                  isHomeHero
-                    ? 'border-white/70 bg-black/15 text-white hover:border-gold hover:bg-gold hover:text-obsidian'
-                    : 'border-gold/70 bg-obsidian/5 text-ivory hover:border-gold hover:bg-gold hover:text-obsidian'
-                }`}
+                className="inline-flex h-9 items-center whitespace-nowrap rounded-md border border-[#C9A45C] bg-[#C9A45C] px-3 text-[10px] font-bold tracking-[0.1em] uppercase text-primary shadow-[0_8px_18px_-12px_rgba(0,0,0,0.75)] transition-colors duration-200 hover:border-[#E4D1A7] hover:bg-[#E4D1A7] sm:px-3.5"
                 data-cursor-hover
               >
                 Create Account
@@ -210,7 +189,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden glass mt-3 mx-4 rounded-sm"
+            className="overflow-hidden glass mt-3 mx-4 rounded-md shadow-glass lg:absolute lg:left-8 lg:top-full lg:mt-2 lg:mx-0 lg:w-80"
           >
             <ul className="flex flex-col divide-y divide-gold/10">
               {NAV_LINKS.map((link) => (
