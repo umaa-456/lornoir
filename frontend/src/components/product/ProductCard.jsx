@@ -79,8 +79,8 @@ export default function ProductCard({ product }) {
             )}
 
             {onSale && (
-              <span className="absolute top-3 left-3 bg-ember text-ivory text-[10px] tracking-widest2 uppercase px-2 py-1">
-                {product.activeSale.discount}% Off
+              <span className="absolute top-2.5 left-2.5 z-10 rounded-md border border-white/20 bg-rose-700/90 px-2.5 py-1 text-[10px] font-bold leading-none tracking-wide text-white shadow-lg shadow-black/30 backdrop-blur-[1px]">
+                {product.activeSale.discount}% OFF
               </span>
             )}
             {product.tags?.includes('new') && !onSale && (
