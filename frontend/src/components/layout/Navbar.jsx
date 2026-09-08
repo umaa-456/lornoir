@@ -57,34 +57,33 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-gold/25 bg-primary/95 py-3 text-white shadow-[0_10px_30px_-20px_rgba(18,60,53,0.9)] backdrop-blur-md transition-all duration-300">
-      <div className="mx-auto grid max-w-[100rem] grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 px-4 sm:px-5 md:px-8 xl:grid-cols-[minmax(8rem,1fr)_auto_minmax(25rem,1fr)] xl:gap-6">
-        {/* Brand and drawer control stay together at the left at every width. */}
-        <div className="flex flex-col items-start gap-1.5 xl:justify-self-start">
-          <Link to="/" className="flex min-w-0 items-center select-none" data-cursor-hover>
-            {!logoFailed ? (
-              <img
-                src={STORE_LOGO_PATH}
-                alt={settings.siteName}
-                className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] lg:h-10"
-                onError={() => setLogoFailed(true)}
-              />
-            ) : (
-              <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
-                {settings.siteName}
-              </span>
-            )}
-          </Link>
-          <button
-            className="flex h-6 w-7 items-center justify-start rounded-sm border border-gold/30 pl-1 text-xl text-gold transition-colors duration-200 hover:border-gold hover:bg-gold/10 hover:text-gold-pale"
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
-          </button>
-        </div>
+      <div className="mx-auto grid max-w-[100rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-4 sm:px-5 md:px-8 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-5">
+        <Link to="/" className="flex min-w-0 items-center select-none lg:pr-2" data-cursor-hover>
+          {!logoFailed ? (
+            <img
+              src={STORE_LOGO_PATH}
+              alt={settings.siteName}
+              className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] lg:h-10"
+              onError={() => setLogoFailed(true)}
+            />
+          ) : (
+            <span className="font-script text-2xl md:text-3xl tracking-widest3 uppercase text-gold-sheen">
+              {settings.siteName}
+            </span>
+          )}
+        </Link>
+
+        {/* This control is intentionally mobile-only; desktop always exposes the full nav. */}
+        <button
+          className="col-start-2 row-start-1 flex h-9 w-9 items-center justify-center rounded-md border border-gold/35 text-xl text-gold transition-colors duration-200 hover:border-gold hover:bg-gold/10 hover:text-gold-pale lg:hidden"
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMobileOpen((v) => !v)}
+        >
+          {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
+        </button>
 
         {/* Desktop nav */}
-        <nav className="hidden min-w-max self-center xl:flex items-center justify-self-center whitespace-nowrap gap-4 2xl:gap-6">
+        <nav className="hidden min-w-0 self-center lg:flex items-center justify-self-center whitespace-nowrap gap-2.5 xl:gap-4 2xl:gap-6">
           {NAV_LINKS.map((link) => (
             <div key={link.label} className="relative group">
               <NavLink
@@ -111,42 +110,43 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           ))}
         </nav>
 
-        {/* Utility controls become a deliberate second row on compact screens. */}
-        <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-2 pt-0.5 text-xl sm:gap-x-3 xl:col-start-3 xl:min-w-max xl:flex-nowrap xl:justify-self-end xl:self-center xl:pt-0">
+        {/* On mobile this is a compact second row; from laptop upward it joins the main nav row. */}
+        <div className="col-span-2 row-start-2 mt-2 flex min-w-0 items-center justify-between gap-2 border-t border-gold/20 pt-2 text-lg sm:gap-3 sm:text-xl lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:mt-0 lg:justify-self-end lg:border-0 lg:pt-0">
           {!loading && !isAuthenticated && (
-            <div className="order-last flex basis-full items-center justify-end gap-2 border-t border-gold/20 pt-2 sm:gap-2.5 xl:order-none xl:basis-auto xl:border-0 xl:pt-0">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <Link
                 to="/login"
-                className="inline-flex h-9 items-center whitespace-nowrap rounded-md border border-gold/80 bg-primary/20 px-3 text-[10px] font-semibold tracking-[0.12em] uppercase text-white transition-colors duration-200 hover:border-gold hover:bg-[#C9A45C] hover:text-primary sm:px-3.5"
+                className="inline-flex h-8 items-center whitespace-nowrap rounded-md border border-gold/80 bg-primary/20 px-2.5 text-[9px] font-semibold tracking-[0.1em] uppercase text-white transition-colors duration-200 hover:border-gold hover:bg-[#C9A45C] hover:text-primary sm:h-9 sm:px-3 sm:text-[10px]"
                 data-cursor-hover
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="inline-flex h-9 items-center whitespace-nowrap rounded-md border border-[#C9A45C] bg-[#C9A45C] px-3 text-[10px] font-bold tracking-[0.1em] uppercase text-primary shadow-[0_8px_18px_-12px_rgba(0,0,0,0.75)] transition-colors duration-200 hover:border-[#E4D1A7] hover:bg-[#E4D1A7] sm:px-3.5"
+                className="inline-flex h-8 items-center whitespace-nowrap rounded-md border border-[#C9A45C] bg-[#C9A45C] px-2.5 text-[9px] font-bold tracking-[0.08em] uppercase text-primary shadow-[0_8px_18px_-12px_rgba(0,0,0,0.75)] transition-colors duration-200 hover:border-[#E4D1A7] hover:bg-[#E4D1A7] sm:h-9 sm:px-3 sm:text-[10px]"
                 data-cursor-hover
               >
                 Create Account
               </Link>
             </div>
           )}
-          <button
-            aria-label="Search products"
-            className="hover:text-gold transition-colors"
-            data-cursor-hover
-            onClick={() => setSearchOpen(true)}
-          >
-            <HiOutlineSearch />
-          </button>
-          <button
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="hidden md:inline-flex items-center hover:text-gold transition-colors"
-            data-cursor-hover
-            onClick={toggleTheme}
-          >
-            {isDark ? <HiOutlineSun /> : <HiOutlineMoon />}
-          </button>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <button
+              aria-label="Search products"
+              className="hover:text-gold transition-colors"
+              data-cursor-hover
+              onClick={() => setSearchOpen(true)}
+            >
+              <HiOutlineSearch />
+            </button>
+            <button
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="hidden md:inline-flex items-center hover:text-gold transition-colors"
+              data-cursor-hover
+              onClick={toggleTheme}
+            >
+              {isDark ? <HiOutlineSun /> : <HiOutlineMoon />}
+            </button>
           {isAuthenticated ? (
             <>
               <Link to="/account" aria-label="My account" className="inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
@@ -170,14 +170,15 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               </button>
             </>
           ) : null}
-          <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
-            <HiOutlineHeart />
-            {wishlistCount > 0 && <CountBadge count={wishlistCount} />}
-          </Link>
-          <Link to="/cart" aria-label="Shopping bag" className="relative hover:text-gold transition-colors" data-cursor-hover>
-            <HiOutlineShoppingBag />
-            {cartCount > 0 && <CountBadge count={cartCount} />}
-          </Link>
+            <Link to="/wishlist" aria-label="Wishlist" className="relative hover:text-gold transition-colors" data-cursor-hover>
+              <HiOutlineHeart />
+              {wishlistCount > 0 && <CountBadge count={wishlistCount} />}
+            </Link>
+            <Link to="/cart" aria-label="Shopping bag" className="relative hover:text-gold transition-colors" data-cursor-hover>
+              <HiOutlineShoppingBag />
+              {cartCount > 0 && <CountBadge count={cartCount} />}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -189,7 +190,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden glass mt-3 mx-4 rounded-md shadow-glass lg:absolute lg:left-8 lg:top-full lg:mt-2 lg:mx-0 lg:w-80"
+            className="overflow-hidden glass mt-3 mx-4 rounded-md shadow-glass lg:hidden"
           >
             <ul className="flex flex-col divide-y divide-gold/10">
               {NAV_LINKS.map((link) => (
