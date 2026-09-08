@@ -32,12 +32,16 @@ export default function ProductDetail() {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState(0);
+  // Variants are embedded in Product and intentionally have no Mongo _id.
+  // SKU is therefore the API/model identity for a design (and the value used
+  // by cart and order validation); never use a gallery/array index as one.
+  const [selectedVariantSku, setSelectedVariantSku] = useState(null);
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('Description');
   const [zoomStyle, setZoomStyle] = useState({});
 
   useEffect(() => {
+    let cancelled = false;
     setProduct(null);
     setNotFound(false);
     window.scrollTo({ top: 0 });
@@ -45,15 +49,27 @@ export default function ProductDetail() {
     productsApi
       .getBySlug(slug)
       .then((p) => {
+        if (cancelled) return;
         setProduct(p);
+        const variants = Array.isArray(p.variants) ? p.variants : [];
+        // Prefer a purchasable design so a sold-out first design does not
+        // initially make the whole product look unavailable. If every active
+        // design is sold out, retain the first one to show its true state.
+        const initialVariant = variants.find(isPurchasableVariant)
+          || variants.find(isSelectableVariant)
+          || null;
         setActiveImage(0);
-        setSelectedVariant(p.variants?.length === 1 ? 0 : null);
+        setSelectedVariantSku(initialVariant?.sku || null);
         setQty(1);
         recordView(slug);
       })
-      .catch(() => setNotFound(true));
+      .catch(() => { if (!cancelled) setNotFound(true); });
 
-    productsApi.getRelated(slug).then(setRelated).catch(() => setRelated([]));
+    productsApi.getRelated(slug).then((items) => {
+      if (!cancelled) setRelated(items);
+    }).catch(() => { if (!cancelled) setRelated([]); });
+
+    return () => { cancelled = true; };
   }, [slug]);
 
   useEffect(() => {
@@ -80,10 +96,14 @@ export default function ProductDetail() {
 
   if (!product) return <PageLoader />;
 
-  const selectedDesign = selectedVariant === null ? null : product.variants[selectedVariant];
-  // Fallback only prevents an unselected multi-design product from being
-  // rendered as purchasable; add-to-cart still requires selectedDesign.
-  const variant = selectedDesign || { stock: 0, price: product.basePrice, sku: '' };
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const selectedDesign = variants.find((item) => item.sku === selectedVariantSku) || null;
+  // A missing/invalid server SKU is not a sellable selection. The UI does not
+  // infer identity from a thumbnail index or fabricate stock in that case.
+  const selectedStock = stockCount(selectedDesign?.stock);
+  const variant = selectedDesign
+    ? { ...selectedDesign, stock: selectedStock }
+    : { stock: 0, price: product.basePrice, sku: '' };
   const onSale = isOnActiveSale(product);
   const displayedPrice = getSalePrice(product, variant.price);
   const wishlisted = isWishlisted(product._id);
@@ -93,6 +113,7 @@ export default function ProductDetail() {
   const showGalleryControls = images.length > 1;
   const availability = product.stockStatus || 'in_stock';
   const unavailable = availability !== 'in_stock';
+  const selectedAvailable = !unavailable && isPurchasableVariant(selectedDesign);
   const showPrevious = () => setActiveImage((current) => (current - 1 + images.length) % images.length);
   const showNext = () => setActiveImage((current) => (current + 1) % images.length);
 
@@ -105,7 +126,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!selectedDesign) { toast.error('Please select a design first'); return; }
-    if (variant.stock === 0 || unavailable) return;
+    if (!selectedAvailable) return;
     addToCart(product, variant, qty);
   };
 
@@ -125,7 +146,7 @@ export default function ProductDetail() {
       url: typeof window !== 'undefined' ? window.location.href : undefined,
       priceCurrency: settings.currency || 'PKR',
       price: displayedPrice,
-      availability: !unavailable && variant?.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability: selectedAvailable ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   };
 
@@ -219,7 +240,7 @@ export default function ProductDetail() {
             <p className="text-2xl font-body">{selectedDesign ? formatCurrency(displayedPrice, settings.currency) : `From ${formatCurrency(product.basePrice, settings.currency)}`}</p>
             {onSale && selectedDesign && <><span className="text-sm text-ivory/40 line-through">{formatCurrency(variant.price, settings.currency)}</span><span className="text-xs text-ember-light tracking-wide">{product.activeSale.discount}% OFF</span></>}
           </div>
-          <p className={`mt-3 text-sm font-medium ${unavailable ? 'text-ember-light' : 'text-primary'}`}>
+          <p className={`mt-3 text-sm font-medium ${selectedAvailable ? 'text-primary' : 'text-ember-light'}`}>
             {availability === 'coming_soon' ? 'Coming Soon' : unavailable ? 'Out of Stock' : variant.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
           </p>
 
@@ -227,24 +248,25 @@ export default function ProductDetail() {
           <div className="mt-8">
             <p className="text-[11px] tracking-widest2 uppercase text-ivory/50 mb-3">Select Design</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {product.variants.map((v, i) => (
+              {variants.map((v) => (
                 <button
                   key={v.sku}
                   onClick={() => {
-                    setSelectedVariant(i);
+                    setSelectedVariantSku(v.sku);
+                    setActiveImage(0);
                     setQty(1);
                   }}
-                  disabled={unavailable || v.isActive === false || v.stock < 1}
+                  disabled={unavailable || !isSelectableVariant(v)}
                   data-cursor-hover
                   className={`overflow-hidden border text-left transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${
-                    selectedVariant === i
+                    selectedVariantSku === v.sku
                       ? 'border-gold ring-1 ring-gold bg-gold/10'
                       : 'border-gold/25 text-ivory/70 hover:border-gold/60'
                   }`}
                 >
                   <div className="aspect-square bg-obsidian-light">{v.image?.url && <img src={v.image.url} alt={v.label} className="w-full h-full object-cover" />}</div>
                   <span className="block px-3 pt-2 text-sm font-semibold">{v.label}</span>
-                  <span className={`block px-3 pb-3 text-xs mt-1 ${v.stock > 0 && v.isActive !== false ? 'text-primary' : 'text-ember-light'}`}>{v.isActive === false || v.stock === 0 ? 'Out of Stock' : v.stock === 1 ? 'Only 1 left' : `${v.stock} available`}</span>
+                  <span className={`block px-3 pb-3 text-xs mt-1 ${isPurchasableVariant(v) ? 'text-primary' : 'text-ember-light'}`}>{!isPurchasableVariant(v) ? 'Out of Stock' : stockCount(v.stock) === 1 ? 'Only 1 left' : `${stockCount(v.stock)} available`}</span>
                 </button>
               ))}
             </div>
@@ -256,6 +278,7 @@ export default function ProductDetail() {
             <div className="flex items-center border border-gold/25">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
+                disabled={!selectedAvailable}
                 className="w-10 h-11 text-lg hover:text-gold"
                 aria-label="Decrease quantity"
               >
@@ -263,7 +286,8 @@ export default function ProductDetail() {
               </button>
               <span className="w-10 text-center text-sm">{qty}</span>
               <button
-                onClick={() => setQty((q) => Math.min(variant.stock || 1, q + 1))}
+                onClick={() => setQty((q) => Math.min(selectedStock, q + 1))}
+                disabled={!selectedAvailable}
                 className="w-10 h-11 text-lg hover:text-gold"
                 aria-label="Increase quantity"
               >
@@ -272,11 +296,11 @@ export default function ProductDetail() {
             </div>
             <button
               onClick={handleAddToCart}
-              disabled={!selectedDesign || variant.stock === 0 || unavailable}
+              disabled={!selectedAvailable}
               data-cursor-hover
               className="flex-1 py-3.5 bg-gold text-obsidian text-xs tracking-widest2 uppercase font-semibold hover:bg-gold-pale transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : variant.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
+              {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : selectedAvailable ? 'Add to Bag' : 'Out of Stock'}
             </button>
             <button
               onClick={() => toggleWishlist(product)}
@@ -357,6 +381,19 @@ export default function ProductDetail() {
       )}
     </div>
   );
+}
+
+function stockCount(value) {
+  const stock = Number(value);
+  return Number.isFinite(stock) && stock > 0 ? stock : 0;
+}
+
+function isSelectableVariant(variant) {
+  return Boolean(variant?.sku) && variant.isActive !== false;
+}
+
+function isPurchasableVariant(variant) {
+  return isSelectableVariant(variant) && stockCount(variant.stock) > 0;
 }
 
 function NoteRow({ label, value }) {
