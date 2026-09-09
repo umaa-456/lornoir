@@ -57,13 +57,22 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-gold/25 bg-primary/95 py-3 text-white shadow-[0_10px_30px_-20px_rgba(18,60,53,0.9)] backdrop-blur-md transition-all duration-300">
-      <div className="mx-auto grid max-w-[100rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-4 sm:px-5 md:px-8 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-5">
-        <Link to="/" className="flex min-w-0 items-center select-none lg:pr-2" data-cursor-hover>
+      <div className="relative mx-auto flex h-9 max-w-[100rem] items-center px-3 sm:px-5 md:px-8 lg:grid lg:h-auto lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-5">
+        {/* This control is intentionally mobile-only; desktop always exposes the full nav. */}
+        <button
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gold/35 text-lg text-gold transition-colors duration-200 hover:border-gold hover:bg-gold/10 hover:text-gold-pale lg:hidden"
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMobileOpen((v) => !v)}
+        >
+          {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
+        </button>
+
+        <Link to="/" className="absolute left-1/2 flex -translate-x-1/2 items-center select-none lg:static lg:translate-x-0 lg:pr-2" data-cursor-hover>
           {!logoFailed ? (
             <img
               src={STORE_LOGO_PATH}
               alt={settings.siteName}
-              className="h-8 w-auto max-w-[9rem] shrink-0 object-contain md:h-9 md:max-w-[11rem] lg:h-10"
+              className="h-7 w-auto max-w-[5.5rem] shrink-0 object-contain sm:h-8 sm:max-w-[9rem] md:h-9 md:max-w-[11rem] lg:h-10"
               onError={() => setLogoFailed(true)}
             />
           ) : (
@@ -72,15 +81,6 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             </span>
           )}
         </Link>
-
-        {/* This control is intentionally mobile-only; desktop always exposes the full nav. */}
-        <button
-          className="col-start-2 row-start-1 flex h-9 w-9 items-center justify-center rounded-md border border-gold/35 text-xl text-gold transition-colors duration-200 hover:border-gold hover:bg-gold/10 hover:text-gold-pale lg:hidden"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
-        </button>
 
         {/* Desktop nav */}
         <nav className="hidden min-w-0 self-center lg:flex items-center justify-self-center whitespace-nowrap gap-2.5 xl:gap-4 2xl:gap-6">
@@ -110,10 +110,9 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           ))}
         </nav>
 
-        {/* On mobile this is a compact second row; from laptop upward it joins the main nav row. */}
-        <div className="col-span-2 row-start-2 mt-2 flex min-w-0 items-center justify-between gap-2 border-t border-gold/20 pt-2 text-lg sm:gap-3 sm:text-xl lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:mt-0 lg:justify-self-end lg:border-0 lg:pt-0">
+        <div className="ml-auto flex min-w-0 items-center gap-1.5 text-lg sm:gap-2 sm:text-xl lg:ml-0 lg:justify-self-end lg:gap-3 lg:text-lg">
           {!loading && !isAuthenticated && (
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="hidden shrink-0 items-center gap-1.5 lg:flex lg:gap-2">
               <Link
                 to="/login"
                 className="inline-flex h-8 items-center whitespace-nowrap rounded-md border border-gold/80 bg-primary/20 px-2.5 text-[9px] font-semibold tracking-[0.1em] uppercase text-white transition-colors duration-200 hover:border-gold hover:bg-[#C9A45C] hover:text-primary sm:h-9 sm:px-3 sm:text-[10px]"
@@ -130,7 +129,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               </Link>
             </div>
           )}
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
             <button
               aria-label="Search products"
               className="hover:text-gold transition-colors"
@@ -141,15 +140,25 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             </button>
             <button
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="hidden md:inline-flex items-center hover:text-gold transition-colors"
+              className="hidden lg:inline-flex items-center hover:text-gold transition-colors"
               data-cursor-hover
               onClick={toggleTheme}
             >
               {isDark ? <HiOutlineSun /> : <HiOutlineMoon />}
             </button>
+          {!loading && (
+            <Link
+              to={isAuthenticated ? '/account' : '/login'}
+              aria-label={isAuthenticated ? 'My account' : 'Sign in'}
+              className="inline-flex shrink-0 items-center hover:text-gold transition-colors lg:hidden"
+              data-cursor-hover
+            >
+              <HiOutlineUser />
+            </Link>
+          )}
           {isAuthenticated ? (
             <>
-              <Link to="/account" aria-label="My account" className="inline-flex shrink-0 items-center hover:text-gold transition-colors" data-cursor-hover>
+              <Link to="/account" aria-label="My account" className="hidden shrink-0 items-center hover:text-gold transition-colors lg:inline-flex" data-cursor-hover>
                 <HiOutlineUser />
               </Link>
               <Link
