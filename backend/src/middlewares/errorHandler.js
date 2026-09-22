@@ -1,4 +1,5 @@
 import ApiError from '../utils/ApiError.js';
+import { sanitizeMongoError } from '../config/db.js';
 
 export default function errorHandler(err, req, res, next) {
   let error = err;
@@ -23,6 +24,18 @@ export default function errorHandler(err, req, res, next) {
   // JWT errors
   if (err.name === 'JsonWebTokenError') error = ApiError.unauthorized('Invalid token');
   if (err.name === 'TokenExpiredError') error = ApiError.unauthorized('Token expired');
+
+  if (
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongooseError' ||
+    err.name === 'MongoNetworkError' ||
+    /buffering timed out|ECONNREFUSED|querySrv|ReplicaSetNoPrimary/i.test(err.message || '')
+  ) {
+    error = ApiError.serviceUnavailable(
+      sanitizeMongoError(err.message) ||
+        'Database unavailable. Set MONGO_URI to Atlas and allow Network Access 0.0.0.0/0.'
+    );
+  }
 
   // Cloudinary errors (image upload) — the SDK throws plain objects with
   // an http_code, not a proper Error subclass, so they'd otherwise fall

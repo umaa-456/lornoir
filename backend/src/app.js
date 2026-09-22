@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import mongoSanitize from 'express-mongo-sanitize';
+import mongoose from 'mongoose';
+import connectDB, { mongoUri } from './config/db.js';
 
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -39,9 +41,22 @@ const API_PREFIX = '/api/v1';
 
 // ---------- Security & performance middleware ----------
 app.use(helmet());
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+  process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+]
+  .filter(Boolean)
+  .map((origin) => origin.replace(/\/$/, ''));
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (/\.vercel\.app$/.test(origin)) return callback(null, true);
+      return callback(null, false);
+    },
     credentials: true,
   })
 );
@@ -62,8 +77,38 @@ app.use(mongoSanitize());
 // ---------- Rate limiting (applies to all /api routes) ----------
 app.use('/api', apiLimiter);
 
+app.use(async (req, res, next) => {
+  if (req.path === '/health') return next();
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ---------- Health check ----------
-app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
+app.get('/health', async (req, res) => {
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  let mongo = states[mongoose.connection.readyState] || String(mongoose.connection.readyState);
+  let mongoError;
+  try {
+    if (mongoUri()) {
+      await connectDB();
+      mongo = states[mongoose.connection.readyState] || String(mongoose.connection.readyState);
+    }
+  } catch (err) {
+    mongo = 'error';
+    mongoError = err.message;
+  }
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    mongo,
+    mongoConfigured: Boolean(mongoUri()),
+    ...(mongoError ? { mongoError } : {}),
+  });
+});
 
 // ---------- Dynamic sitemap ----------
 // Includes every active product/brand/category from the live database.
