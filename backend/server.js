@@ -1,3 +1,4 @@
+import './src/config/network.js';
 import 'dotenv/config';
 import app from './src/app.js';
 import connectDB from './src/config/db.js';

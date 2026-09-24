@@ -1,9 +1,7 @@
-import dns from 'node:dns';
+import './network.js';
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
-// Node 18+ Happy Eyeballs can stall on Atlas SRV IPv6 for several seconds on Vercel.
-dns.setDefaultResultOrder('ipv4first');
 mongoose.set('bufferCommands', false);
 mongoose.set('strictQuery', true);
 
@@ -68,12 +66,13 @@ async function reconcileProductIndexes() {
   globalCache.__mongoose.indexesReady = true;
 }
 
-function connectOptions(family) {
+function connectOptions(family, serverSelectionTimeoutMS = 8000) {
   return {
     bufferCommands: false,
-    serverSelectionTimeoutMS: 12000,
+    serverSelectionTimeoutMS,
+    connectTimeoutMS: 8000,
     socketTimeoutMS: 20000,
-    maxPoolSize: process.env.VERCEL ? 1 : 10,
+    maxPoolSize: process.env.VERCEL ? 5 : 10,
     minPoolSize: 0,
     maxIdleTimeMS: 25000,
     ...(family ? { family } : {}),
@@ -82,13 +81,13 @@ function connectOptions(family) {
 
 async function openConnection(uri) {
   try {
-    return await mongoose.connect(uri, connectOptions(4));
+    return await mongoose.connect(uri, connectOptions(4, 8000));
   } catch (firstErr) {
     console.error(`MongoDB IPv4 connect failed: ${sanitizeMongoError(firstErr.message)}`);
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect().catch(() => {});
     }
-    return mongoose.connect(uri, connectOptions());
+    return mongoose.connect(uri, connectOptions(undefined, 10000));
   }
 }
 
@@ -106,23 +105,35 @@ export default async function connectDB() {
     );
   }
 
-  if (mongoose.connection.readyState === 1 && globalCache.__mongoose.conn) {
-    return globalCache.__mongoose.conn;
+  const state = mongoose.connection.readyState;
+  if (state === 1) {
+    return mongoose;
+  }
+
+  // Drop a resolved promise from a previous (now dead) connection so we reconnect.
+  if (state === 0 || state === 3) {
+    globalCache.__mongoose.promise = null;
+    globalCache.__mongoose.conn = null;
   }
 
   if (!globalCache.__mongoose.promise) {
-    globalCache.__mongoose.promise = openConnection(uri);
+    globalCache.__mongoose.promise = openConnection(uri).then((conn) => {
+      globalCache.__mongoose.conn = conn;
+      reconcileProductIndexes().catch((indexErr) => {
+        console.error(`Product index reconcile skipped: ${sanitizeMongoError(indexErr.message)}`);
+      });
+      console.log(`MongoDB connected: ${conn.connection.host}`);
+      return conn;
+    });
   }
 
   try {
     const conn = await globalCache.__mongoose.promise;
-    globalCache.__mongoose.conn = conn;
-    try {
-      await reconcileProductIndexes();
-    } catch (indexErr) {
-      console.error(`Product index reconcile skipped: ${sanitizeMongoError(indexErr.message)}`);
+    if (mongoose.connection.readyState !== 1) {
+      globalCache.__mongoose.promise = null;
+      globalCache.__mongoose.conn = null;
+      throw new Error('MongoDB socket is not ready after connect()');
     }
-    console.log(`MongoDB connected: ${conn.connection.host}`);
     return conn;
   } catch (err) {
     globalCache.__mongoose.promise = null;

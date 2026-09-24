@@ -15,6 +15,9 @@
       "includeFiles": "backend/**"
     }
   },
+  "env": {
+    "NODE_OPTIONS": "--dns-result-order=ipv4first"
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
