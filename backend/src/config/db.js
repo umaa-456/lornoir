@@ -1,5 +1,32 @@
+import './network.js';
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+
+mongoose.set('bufferCommands', false);
+mongoose.set('strictQuery', true);
+
+/**
+ * Reuse one connection across Vercel warm invocations. A new connect() on
+ * every request races with in-flight queries and triggers mongoose buffering
+ * timeouts (`products.find()` after 10000ms).
+ */
+const globalCache = globalThis;
+if (!globalCache.__mongoose) {
+  globalCache.__mongoose = { conn: null, promise: null, indexesReady: false };
+}
+
+export function mongoUri() {
+  return (
+    process.env.MONGO_URI?.trim() ||
+    process.env.MONGODB_URI?.trim() ||
+    process.env.MONGODB_URL?.trim() ||
+    ''
+  );
+}
+
+export function sanitizeMongoError(message) {
+  return String(message || '').replace(/mongodb(\+srv)?:\/\/\S+/gi, 'mongodb://***');
+}
 
 /**
  * Product display and merchandising data is deliberately non-unique. MongoDB
@@ -8,6 +35,8 @@ import Product from '../models/Product.js';
  * identifier and the Product hook guarantees a unique value for it.
  */
 async function reconcileProductIndexes() {
+  if (globalCache.__mongoose.indexesReady) return;
+
   let indexes = [];
   try {
     indexes = await Product.collection.indexes();
@@ -33,17 +62,86 @@ async function reconcileProductIndexes() {
     }
   }
 
-  // Recreate the declared slug and catalogue query indexes after cleanup.
   await Product.createIndexes();
+  globalCache.__mongoose.indexesReady = true;
+}
+
+function connectOptions(family, serverSelectionTimeoutMS = 8000) {
+  return {
+    bufferCommands: false,
+    serverSelectionTimeoutMS,
+    connectTimeoutMS: 8000,
+    socketTimeoutMS: 20000,
+    maxPoolSize: process.env.VERCEL ? 5 : 10,
+    minPoolSize: 0,
+    maxIdleTimeMS: 25000,
+    ...(family ? { family } : {}),
+  };
+}
+
+async function openConnection(uri) {
+  try {
+    return await mongoose.connect(uri, connectOptions(4, 8000));
+  } catch (firstErr) {
+    console.error(`MongoDB IPv4 connect failed: ${sanitizeMongoError(firstErr.message)}`);
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect().catch(() => {});
+    }
+    return mongoose.connect(uri, connectOptions(undefined, 10000));
+  }
 }
 
 export default async function connectDB() {
+  const uri = mongoUri();
+  if (!uri) {
+    throw new Error(
+      'MONGO_URI is not set. Add it in Vercel → Project → Settings → Environment Variables for Production, then redeploy.'
+    );
+  }
+
+  if (process.env.VERCEL && /localhost|127\.0\.0\.1/.test(uri)) {
+    throw new Error(
+      'MONGO_URI points at localhost. Vercel cannot reach your PC — use a MongoDB Atlas connection string.'
+    );
+  }
+
+  const state = mongoose.connection.readyState;
+  if (state === 1) {
+    return mongoose;
+  }
+
+  // Drop a resolved promise from a previous (now dead) connection so we reconnect.
+  if (state === 0 || state === 3) {
+    globalCache.__mongoose.promise = null;
+    globalCache.__mongoose.conn = null;
+  }
+
+  if (!globalCache.__mongoose.promise) {
+    globalCache.__mongoose.promise = openConnection(uri).then((conn) => {
+      globalCache.__mongoose.conn = conn;
+      reconcileProductIndexes().catch((indexErr) => {
+        console.error(`Product index reconcile skipped: ${sanitizeMongoError(indexErr.message)}`);
+      });
+      console.log(`MongoDB connected: ${conn.connection.host}`);
+      return conn;
+    });
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    await reconcileProductIndexes();
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    const conn = await globalCache.__mongoose.promise;
+    if (mongoose.connection.readyState !== 1) {
+      globalCache.__mongoose.promise = null;
+      globalCache.__mongoose.conn = null;
+      throw new Error('MongoDB socket is not ready after connect()');
+    }
+    return conn;
   } catch (err) {
-    console.error(`MongoDB connection error: ${err.message}`);
-    process.exit(1);
+    globalCache.__mongoose.promise = null;
+    globalCache.__mongoose.conn = null;
+    const message = sanitizeMongoError(err.message);
+    console.error(`MongoDB connection error: ${message}`);
+    throw new Error(
+      `${message} — In Atlas: Network Access must allow 0.0.0.0/0. In Vercel: MONGO_URI must be the Atlas string (not localhost).`
+    );
   }
 }
