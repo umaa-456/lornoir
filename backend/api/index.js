@@ -1,7 +1,7 @@
-import './src/config/network.js';
+import '../src/config/network.js';
 import 'dotenv/config';
-import app from './src/app.js';
-import connectDB from './src/config/db.js';
+import app from '../src/app.js';
+import connectDB from '../src/config/db.js';
 
 export default async function handler(req, res) {
   try {
