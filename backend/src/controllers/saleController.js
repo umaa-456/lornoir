@@ -2,7 +2,7 @@ import Sale from '../models/Sale.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import Product from '../models/Product.js';
-import { withActiveSale } from '../utils/salePricing.js';
+import { selectBestSalesByProduct, withActiveSale } from '../utils/salePricing.js';
 
 async function validateProducts(productIds) {
   if (!Array.isArray(productIds) || productIds.length === 0) {
@@ -20,15 +20,23 @@ export const listSales = asyncHandler(async (req, res) => {
 });
 export const getActiveSale = asyncHandler(async (req, res) => {
   const now = new Date();
-  const sale = await Sale.findOne({ enabled: true, startsAt: { $lte: now }, endsAt: { $gte: now } }).populate('products').sort('-startsAt');
-  if (sale) {
+  const activeSales = await Sale.find({ enabled: true, startsAt: { $lte: now }, endsAt: { $gte: now } })
+    .populate({ path: 'products', match: { isActive: true } })
+    .sort({ discount: -1, startsAt: -1, _id: 1 });
+  const salesWithProducts = activeSales.filter((sale) => sale.products?.length);
+  const bestSaleByProduct = selectBestSalesByProduct(salesWithProducts);
+  const sales = salesWithProducts.map((sale) => {
     const responseSale = sale.toObject();
-    const activeSale = { _id: sale._id, title: sale.title, occasion: sale.occasion, discount: sale.discount, startsAt: sale.startsAt, endsAt: sale.endsAt };
-    const productMap = new Map((sale.products || []).map((product) => [product._id.toString(), activeSale]));
-    responseSale.products = (sale.products || []).map((product) => withActiveSale(product, productMap));
-    return res.json({ success: true, sale: responseSale });
-  }
-  res.json({ success: true, sale: sale || null });
+    const includedProductIds = new Set();
+    responseSale.products = sale.products.filter((product) => {
+      const productId = product._id.toString();
+      if (includedProductIds.has(productId) || !bestSaleByProduct.get(productId)?._id.equals(sale._id)) return false;
+      includedProductIds.add(productId);
+      return true;
+    }).map((product) => withActiveSale(product, bestSaleByProduct));
+    return responseSale;
+  }).filter((sale) => sale.products.length);
+  res.json({ success: true, sales });
 });
 export const createSale = asyncHandler(async (req, res) => {
   const products = await validateProducts(req.body.products);
