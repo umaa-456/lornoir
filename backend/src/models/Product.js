@@ -56,6 +56,11 @@ const productSchema = new mongoose.Schema(
       enum: ['new', 'bestseller', 'trending', 'featured', 'flash-sale', 'gift-sets'],
       default: [],
     },
+    season: {
+      type: String,
+      enum: ['winter', 'summer', 'four-seasons'],
+      default: null,
+    },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
     lowStockThreshold: { type: Number, default: 5 },

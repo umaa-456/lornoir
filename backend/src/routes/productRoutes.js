@@ -25,6 +25,7 @@ router.post(
     body('name').notEmpty().withMessage('Name is required'),
     body('brand').notEmpty().withMessage('Brand is required'),
     body('category').notEmpty().withMessage('Category is required'),
+    body('season').optional({ nullable: true }).isIn(['winter', 'summer', 'four-seasons']).withMessage('Invalid season'),
     body('description').notEmpty().withMessage('Description is required'),
     body('variants').isArray({ min: 1 }).withMessage('At least one variant is required'),
   ],
@@ -32,7 +33,14 @@ router.post(
   productController.createProduct
 );
 
-router.patch('/:id', protect, restrictTo('admin'), productController.updateProduct);
+router.patch(
+  '/:id',
+  protect,
+  restrictTo('admin'),
+  [body('season').optional({ nullable: true }).isIn(['winter', 'summer', 'four-seasons']).withMessage('Invalid season')],
+  validate,
+  productController.updateProduct
+);
 router.patch(
   '/:id/shipping-fee',
   protect,

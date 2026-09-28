@@ -7,21 +7,38 @@ export const activeSaleFilter = (productIds, now = new Date()) => ({
   products: { $in: productIds },
 });
 
+/** Select one applicable sale per product, preferring the largest discount.
+ * For equal discounts, prefer the most recently started campaign so the
+ * result is deterministic across catalogue, cart, and homepage responses. */
+export function selectBestSalesByProduct(sales) {
+  const byProduct = new Map();
+  for (const sale of sales) {
+    for (const product of sale.products || []) {
+      const key = (product?._id || product).toString();
+      const current = byProduct.get(key);
+      const discount = Number(sale.discount);
+      const currentDiscount = Number(current?.discount ?? -1);
+      const saleStart = new Date(sale.startsAt || 0).getTime();
+      const currentStart = new Date(current?.startsAt || 0).getTime();
+      const saleId = (sale._id || '').toString();
+      const currentId = (current?._id || '').toString();
+      if (!current || discount > currentDiscount || (discount === currentDiscount && (
+        saleStart > currentStart || (saleStart === currentStart && saleId < currentId)
+      ))) {
+        byProduct.set(key, sale);
+      }
+    }
+  }
+  return byProduct;
+}
+
 /** Select the best active discount per product. This keeps overlapping campaigns
  * deterministic and avoids a per-product lookup in catalogue responses. */
 export async function getActiveSalesByProductIds(productIds, now = new Date()) {
   const ids = [...new Set(productIds.filter(Boolean).map((id) => id.toString()))];
   if (!ids.length) return new Map();
   const sales = await Sale.find(activeSaleFilter(ids, now)).lean();
-  const byProduct = new Map();
-  for (const sale of sales) {
-    for (const id of sale.products || []) {
-      const key = id.toString();
-      const current = byProduct.get(key);
-      if (!current || sale.discount > current.discount) byProduct.set(key, sale);
-    }
-  }
-  return byProduct;
+  return selectBestSalesByProduct(sales);
 }
 
 export function salePrice(regularPrice, sale) {
