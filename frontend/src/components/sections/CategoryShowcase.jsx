@@ -6,14 +6,18 @@ import { placeholderSwatch } from '@/utils/placeholderSwatch';
 
 export default function CategoryShowcase() {
   const [categories, setCategories] = useState(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    categoriesApi.list().then(setCategories).catch(() => setCategories([]));
+    categoriesApi.list()
+      .then(setCategories)
+      .catch(() => {
+        setCategories([]);
+        setHasError(true);
+      });
   }, []);
 
   const categoryList = Array.isArray(categories) ? categories : [];
-
-  if (categories !== null && categoryList.length === 0) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-10 py-8">
@@ -22,8 +26,8 @@ export default function CategoryShowcase() {
         <h2 className="heading-display text-4xl md:text-5xl max-w-lg">Everything You Love, All in One Place.</h2>
       </Reveal>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {(categories === null ? Array.from({ length: 4 }) : categoryList).slice(0, 4).map((cat, i) =>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+        {(categories === null ? Array.from({ length: 4 }) : categoryList).map((cat, i) =>
           cat ? (
             <Reveal key={cat.slug} delay={i * 0.08}>
               <Link
@@ -53,6 +57,12 @@ export default function CategoryShowcase() {
           )
         )}
       </div>
+
+      {categories !== null && categoryList.length === 0 && (
+        <p className="text-sm text-ivory/60" role="status">
+          {hasError ? 'Categories are temporarily unavailable. Please try again later.' : 'No categories are available yet.'}
+        </p>
+      )}
     </section>
   );
 }
