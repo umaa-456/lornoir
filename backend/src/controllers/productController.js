@@ -50,6 +50,7 @@ export const listProducts = asyncHandler(async (req, res) => {
     maxPrice,
     minRating,
     tag,
+    season,
     stockStatus,
     sort = 'featured',
     page = 1,
@@ -63,7 +64,7 @@ export const listProducts = asyncHandler(async (req, res) => {
   if (category) {
     const slugs = category.split(',').map((s) => s.trim()).filter(Boolean);
     const cats = await Category.find({ slug: { $in: slugs } }).select('_id');
-    if (cats.length) filter.category = { $in: cats.map((c) => c._id) };
+    filter.category = { $in: cats.map((c) => c._id) };
   }
 
   if (brand) {
@@ -80,6 +81,11 @@ export const listProducts = asyncHandler(async (req, res) => {
 
   if (minRating) filter.rating = { $gte: Number(minRating) };
   if (tag) filter.tags = tag;
+  if (season) {
+    const validSeasons = ['winter', 'summer', 'four-seasons'];
+    if (!validSeasons.includes(season)) throw ApiError.badRequest('Invalid season filter');
+    filter.season = season;
+  }
   // `coming_soon` is an admin-controlled state. The other two states are
   // derived from current variant stock, and must be applied before pagination
   // so the returned count and pages stay accurate.

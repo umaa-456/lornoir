@@ -17,6 +17,19 @@ const SORTS = [
   { key: 'price-desc', label: 'Price: High to Low' },
   { key: 'rating', label: 'Highest Rated' },
 ];
+const SEASONS = [
+  { value: 'winter', label: 'Winter' },
+  { value: 'summer', label: 'Summer' },
+  { value: 'four-seasons', label: 'Four Seasons' },
+];
+
+function getGenderLabel(category) {
+  if (!category) return null;
+  const identity = `${category.name} ${category.slug}`.toLowerCase();
+  if (/\b(women|womens|woman|female)\b/.test(identity)) return 'Women';
+  if (/\b(men|mens|man|male)\b/.test(identity)) return 'Men';
+  return null;
+}
 
 export default function Shop() {
   const { settings } = useSiteSettings();
@@ -34,9 +47,15 @@ export default function Shop() {
   const [filters, setFilters] = useState({
     categories: params.get('category') ? [params.get('category')] : [],
     brands: params.get('brand') ? [params.get('brand')] : [],
+    season: params.get('season') || '',
     maxPrice: PRICE_BOUNDS.max,
     minRating: 0,
   });
+  const selectedCategorySlug = filters.categories.length === 1 ? filters.categories[0] : null;
+  const selectedCategory = selectedCategorySlug
+    ? categories.find((category) => category.slug === selectedCategorySlug) || { name: selectedCategorySlug, slug: selectedCategorySlug }
+    : null;
+  const genderLabel = getGenderLabel(selectedCategory);
 
   // Taxonomy for the filter sidebar loads once.
   useEffect(() => {
@@ -53,6 +72,7 @@ export default function Shop() {
         .list({
           q: search || undefined,
           category: filters.categories.length ? filters.categories.join(',') : undefined,
+          season: filters.season || undefined,
           brand: filters.brands.length ? filters.brands.join(',') : undefined,
           maxPrice: filters.maxPrice < PRICE_BOUNDS.max ? filters.maxPrice : undefined,
           minRating: filters.minRating || undefined,
@@ -77,11 +97,17 @@ export default function Shop() {
 
   const handleFilterChange = (next) => {
     setFilters(next);
+    const nextParams = new URLSearchParams(params);
+    if (next.categories?.length) nextParams.set('category', next.categories.join(','));
+    else nextParams.delete('category');
+    if (next.season) nextParams.set('season', next.season);
+    else nextParams.delete('season');
+    setParams(nextParams, { replace: true });
     setPage(1);
   };
 
   const resetFilters = () => {
-    setFilters({ categories: [], brands: [], maxPrice: PRICE_BOUNDS.max, minRating: 0 });
+    setFilters({ categories: [], brands: [], season: '', maxPrice: PRICE_BOUNDS.max, minRating: 0 });
     setParams({});
     setPage(1);
   };
@@ -95,8 +121,31 @@ export default function Shop() {
 
       <Reveal className="mb-12">
         <p className="eyebrow mb-3">Shop</p>
-        <h1 className="heading-display text-4xl md:text-5xl">The Full Collection</h1>
+        <h1 className="heading-display text-4xl md:text-5xl">{genderLabel || 'The Full Collection'}</h1>
       </Reveal>
+
+      {genderLabel && (
+        <div className="mb-10" aria-label={`${genderLabel} product seasons`}>
+          <p className="eyebrow mb-3">Shop by season</p>
+          <div className="flex flex-wrap gap-2">
+            {SEASONS.map((season) => (
+              <button
+                key={season.value}
+                type="button"
+                onClick={() => handleFilterChange({ ...filters, season: filters.season === season.value ? '' : season.value })}
+                aria-pressed={filters.season === season.value}
+                className={`px-4 py-2 text-[11px] tracking-widest2 uppercase border transition-colors duration-300 ${
+                  filters.season === season.value
+                    ? 'border-gold bg-gold text-obsidian font-semibold'
+                    : 'border-gold/25 text-ivory/60 hover:border-gold/60 hover:text-gold'
+                }`}
+              >
+                {season.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search + sort bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-10">
@@ -161,7 +210,7 @@ export default function Shop() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-24">
-              {pagination.total === 0 && !search && filters.categories.length === 0 && filters.brands.length === 0 ? (
+              {pagination.total === 0 && !search && filters.categories.length === 0 && filters.brands.length === 0 && !filters.season ? (
                 <>
                   <p className="font-display text-2xl mb-3">No products available yet.</p>
                   <p className="text-ivory/50 text-sm">

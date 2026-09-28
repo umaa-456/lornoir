@@ -6,10 +6,13 @@ import { ProductCardSkeleton } from '@/components/ui/Loader';
 import { productsApi } from '@/services/products';
 
 const TABS = [
-  { key: 'trending', label: 'Trending' },
-  { key: 'featured', label: 'Featured' },
-  { key: 'new', label: 'New Arrivals' },
-  { key: 'bestseller', label: 'Best Sellers' },
+  { key: 'trending', label: 'Trending', filter: 'tag' },
+  { key: 'featured', label: 'Featured', filter: 'tag' },
+  { key: 'new', label: 'New Arrivals', filter: 'tag' },
+  { key: 'bestseller', label: 'Best Sellers', filter: 'tag' },
+  { key: 'winter', label: 'Winter', filter: 'season' },
+  { key: 'summer', label: 'Summer', filter: 'season' },
+  { key: 'four-seasons', label: 'Four Seasons', filter: 'season' },
 ];
 
 export default function ProductShowcase() {
@@ -18,26 +21,29 @@ export default function ProductShowcase() {
 
   useEffect(() => {
     setProducts(null);
+    const tab = TABS.find((item) => item.key === active);
     productsApi
-      .list({ tag: active, limit: 8 })
+      .list({ [tab.filter]: active, limit: 8 })
       .then((data) => setProducts(data.products))
       .catch(() => setProducts([]));
   }, [active]);
 
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-10 py-24">
-      <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+      <Reveal className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6 mb-12">
         <div>
           <p className="eyebrow mb-3">The Collection</p>
           <Link to="/shop" className="heading-display text-4xl md:text-5xl hover:text-gold transition-colors" aria-label="View all products in our collection">Products in Our Collection</Link>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div role="tablist" aria-label="Product collections" className="flex flex-wrap gap-2 xl:max-w-[58%] xl:justify-end">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={active === tab.key}
               onClick={() => setActive(tab.key)}
               data-cursor-hover
-              className={`px-4 py-2 text-[11px] tracking-widest2 uppercase border transition-colors duration-300 ${
+              className={`shrink-0 px-4 py-2 text-[11px] tracking-widest2 uppercase border transition-colors duration-300 ${
                 active === tab.key
                   ? 'border-gold bg-gold text-obsidian font-semibold'
                   : 'border-gold/25 text-ivory/60 hover:border-gold/60 hover:text-gold'
@@ -55,7 +61,7 @@ export default function ProductShowcase() {
         </div>
       ) : products.length === 0 ? (
         <p className="text-ivory/50 text-center py-16">
-          No products tagged "{TABS.find((t) => t.key === active)?.label}" yet — add some from the admin dashboard.
+          No products in {TABS.find((t) => t.key === active)?.label} yet — classify products from the admin dashboard.
         </p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">

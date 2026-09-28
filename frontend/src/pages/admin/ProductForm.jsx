@@ -8,6 +8,11 @@ import adminApi from '@/services/adminApi';
 import api from '@/services/api';
 
 const TAGS = ['new', 'bestseller', 'trending', 'featured', 'gift-sets'];
+const SEASONS = [
+  { value: 'winter', label: 'Winter' },
+  { value: 'summer', label: 'Summer' },
+  { value: 'four-seasons', label: 'Four Seasons' },
+];
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -35,6 +40,7 @@ export default function AdminProductForm() {
       description: '',
       notes: { top: '', heart: '', base: '' },
       tags: [],
+      season: '',
       stockStatus: 'in_stock',
       variants: [{ label: '', sku: '', price: '', stock: '', imagePublicId: null }],
     },
@@ -61,6 +67,7 @@ export default function AdminProductForm() {
         description: p.description,
         notes: p.notes,
         tags: p.tags,
+        season: p.season || '',
         stockStatus: p.stockStatus || (p.variants?.every((v) => Number(v.stock) === 0) ? 'out_of_stock' : 'in_stock'),
         variants: p.variants,
       });
@@ -142,6 +149,7 @@ export default function AdminProductForm() {
         description: data.description,
         notes: data.notes,
         tags: data.tags,
+        season: data.season || null,
         stockStatus: data.stockStatus,
         variants: data.variants.map((v) => ({
           ...v,
@@ -201,6 +209,7 @@ export default function AdminProductForm() {
   };
 
   const selectedTags = watch('tags') || [];
+  const selectedSeason = watch('season') || '';
   const designTotalStock = (watch('variants') || []).reduce((total, variant) => total + Math.max(0, Number(variant.stock) || 0), 0);
 
   return (
@@ -283,6 +292,31 @@ export default function AdminProductForm() {
             ))}
           </div>
         </FormField>
+
+        <fieldset>
+          <legend className="text-[11px] tracking-widest2 uppercase text-ivory/50 mb-2">Season</legend>
+          <div className="flex flex-wrap gap-2">
+            {[{ value: '', label: 'No season' }, ...SEASONS].map((season) => (
+              <label
+                key={season.value || 'none'}
+                className={`px-3 py-2 border text-xs tracking-wide cursor-pointer transition-colors ${
+                  selectedSeason === season.value ? 'bg-gold text-obsidian border-gold' : 'border-gold/25 text-ivory/60 hover:border-gold/60'
+                }`}
+              >
+                <input
+                  type="radio"
+                  value={season.value}
+                  {...register('season', {
+                    validate: (value) => value === '' || SEASONS.some((option) => option.value === value) || 'Select a valid season',
+                  })}
+                  className="sr-only"
+                />
+                {season.label}
+              </label>
+            ))}
+          </div>
+          {errors.season?.message && <p className="text-ember-light text-xs mt-1.5" role="alert">{errors.season.message}</p>}
+        </fieldset>
 
         <FormField label="Stock Status">
           <div className="grid grid-cols-3 border border-gold/25">
