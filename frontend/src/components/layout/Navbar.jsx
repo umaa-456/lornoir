@@ -29,6 +29,7 @@ const STORE_LOGO_PATH = '/icons/arwa-icon-512.png';
 export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [logoFailed, setLogoFailed] = useState(false);
   const { isDark, toggleTheme } = useTheme();
@@ -49,6 +50,14 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     await logout();
     setMobileOpen(false);
     navigate('/');
+  };
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    setSearchOpen(false);
+    navigate(`/shop?q=${encodeURIComponent(query)}`);
   };
 
   useEffect(() => {
@@ -263,16 +272,21 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               className="w-full max-w-2xl"
               onClick={(e) => e.stopPropagation()}
             >
+              <form onSubmit={handleSearch}>
               <label htmlFor="global-search" className="eyebrow block mb-3 text-center">
                 Search the collection
               </label>
               <input
                 id="global-search"
                 autoFocus
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 type="text"
                 placeholder="Oud, Chanel, Santal 33…"
-                className="w-full bg-transparent border-b border-gold/40 text-2xl md:text-4xl font-display text-center py-4 focus:outline-none focus:border-gold placeholder:text-ivory/30"
+                className="w-full rounded-t-md border border-gold/40 border-b-2 bg-primary px-4 py-4 text-center font-display text-2xl text-white shadow-lg placeholder:text-white/50 focus:border-gold focus:outline-none md:text-4xl"
               />
+              <button type="submit" className="mx-auto mt-6 block rounded-sm bg-gold px-8 py-3 text-xs font-semibold uppercase tracking-widest2 text-primary transition-colors hover:bg-gold-pale">Search</button>
+              </form>
               <button
                 className="mt-8 mx-auto block text-xs tracking-widest2 uppercase text-ivory/50 hover:text-gold"
                 onClick={() => setSearchOpen(false)}
