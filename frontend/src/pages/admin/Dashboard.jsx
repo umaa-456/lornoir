@@ -22,6 +22,7 @@ import {
 import { StatCard, StatusBadge } from '@/components/admin/StatCard';
 import { TextSkeleton } from '@/components/ui/Loader';
 import adminApi from '@/services/adminApi';
+import { formatCurrency } from '@/utils/currency';
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-        <StatCard label="Revenue (Paid)" value={`$${stats.totalRevenue.toLocaleString()}`} icon={HiOutlineCurrencyDollar} />
+        <StatCard label="Revenue (Paid)" value={formatCurrency(stats.totalRevenue)} icon={HiOutlineCurrencyDollar} />
         <StatCard label="Total Orders" value={stats.orderCount} icon={HiOutlineClipboardList} to="/admin/orders" />
         <StatCard
           label="Pending Orders"
@@ -98,8 +99,9 @@ export default function AdminDashboard() {
               </defs>
               <CartesianGrid stroke="rgba(201, 164, 92, 0.18)" vertical={false} />
               <XAxis dataKey="_id" tick={{ fill: '#8a8477', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#8a8477', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#8a8477', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={formatCurrency} />
               <Tooltip
+                formatter={(value) => [formatCurrency(value), 'Revenue']}
                 contentStyle={{ background: '#FFFFFF', border: '1px solid rgba(201, 164, 92, 0.45)', color: '#252525', fontSize: 12 }}
               />
               <Area type="monotone" dataKey="revenue" stroke="#123C35" strokeWidth={2} fill="url(#goldFill)" />
@@ -152,7 +154,7 @@ export default function AdminDashboard() {
                   </Link>
                 </td>
                 <td className="px-6 py-3 text-ivory/70">{order.user?.name || 'Guest'}</td>
-                <td className="px-6 py-3">${order.total.toFixed(2)}</td>
+                <td className="px-6 py-3">{formatCurrency(order.total)}</td>
                 <td className="px-6 py-3"><StatusBadge status={order.status} /></td>
               </tr>
             ))}
