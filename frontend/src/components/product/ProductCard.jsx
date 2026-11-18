@@ -50,24 +50,35 @@ export default function ProductCard({ product }) {
 
   return (
     <>
-      <div className="group relative flex flex-col bg-obsidian-light border border-gold/20 p-3 transition-[border-color,transform] duration-300 hover:border-gold/50 hover:-translate-y-0.5">
+      <motion.div
+        whileHover={{ y: -6 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-primary/10 bg-white p-3 shadow-[0_8px_28px_-18px_rgba(18,60,53,0.35)] transition-[border-color,box-shadow] duration-300 hover:border-gold/70 hover:shadow-[0_22px_45px_-22px_rgba(18,60,53,0.45)] sm:p-4"
+      >
         <div
           ref={cardRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           style={{ perspective: 900 }}
-          className="relative aspect-[3/4] rounded-sm overflow-hidden"
+          className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#F7F5F0]"
         >
           <motion.div
             animate={{ rotateX: tilt.rx, rotateY: tilt.ry }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             style={{
               transformStyle: 'preserve-3d',
-              background: image ? `url(${image}) center/cover no-repeat` : placeholderSwatch(product.name),
+              background: image ? 'linear-gradient(145deg, #fbfaf7, #f0ede5)' : placeholderSwatch(product.name),
             }}
             className="w-full h-full flex items-center justify-center"
           >
-            {!image && (
+            {image ? (
+              <img
+                src={image}
+                alt={product.name}
+                loading="lazy"
+                className="h-full w-full object-contain p-3 transition-transform duration-700 ease-out group-hover:scale-[1.06] sm:p-4"
+              />
+            ) : (
               <svg viewBox="0 0 100 170" className="w-16 opacity-90" style={{ transform: 'translateZ(40px)' }} aria-hidden="true">
                 <rect x="35" y="10" width="30" height="18" rx="2" fill="#171A18" opacity="0.55" />
                 <path
@@ -96,7 +107,7 @@ export default function ProductCard({ product }) {
           </motion.div>
 
           {/* Hover actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 transition-opacity duration-300 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
             <button
               aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
               data-cursor-hover
@@ -120,30 +131,30 @@ export default function ProductCard({ product }) {
             data-cursor-hover
             onClick={handleQuickAdd}
             disabled={!defaultVariant || unavailable || (product.variants?.length <= 1 && defaultVariant.stock === 0)}
-            className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-obsidian/90 backdrop-blur-sm text-ivory text-[11px] tracking-widest2 uppercase py-3 hover:bg-gold hover:text-obsidian disabled:opacity-60 disabled:cursor-not-allowed"
+            className="absolute bottom-0 left-0 right-0 translate-y-0 bg-primary/95 py-3 text-[11px] uppercase tracking-widest2 text-white backdrop-blur-sm transition-transform duration-300 hover:bg-gold hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 sm:translate-y-full sm:group-hover:translate-y-0 sm:group-focus-within:translate-y-0"
           >
             {unavailable ? (availability === 'coming_soon' ? 'Coming Soon' : 'Out of Stock') : product.variants?.length > 1 ? 'Select Design' : defaultVariant?.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
           </button>
         </div>
 
-        <Link to={`/product/${product.slug}`} data-cursor-hover className="mt-4 block">
-          <p className="text-[11px] tracking-widest2 uppercase text-gold/70">{product.brand?.name}</p>
-          <h3 className="font-display text-lg text-primary mt-1 line-clamp-2 min-h-[3.5rem] group-hover:text-gold transition-colors">{product.name}</h3>
-          <div className="flex items-center gap-2 mt-1.5">
+        <Link to={`/product/${product.slug}`} data-cursor-hover className="mt-4 block flex-1">
+          <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-primary/55">{product.brand?.name || 'Lornoir Collection'}</p>
+          <h3 className="mt-1.5 line-clamp-2 min-h-[3.25rem] font-display text-base leading-snug text-primary transition-colors group-hover:text-[#9A7130] sm:text-lg">{product.name}</h3>
+          <div className="mt-2 flex items-center gap-2">
             <span className="flex items-center gap-0.5 text-gold text-xs">
               <HiStar /> {product.rating?.toFixed?.(1) ?? product.rating ?? '—'}
             </span>
             <span className="text-xs text-ivory/40">({product.reviewCount ?? 0})</span>
           </div>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-primary/10 pt-3">
             {onSale && (
               <span className="font-body text-xs text-ivory/40 line-through">{formatCurrency(regularPrice, settings.currency)}</span>
             )}
-            <span className={`font-body text-sm ${onSale ? 'text-ember-light font-semibold' : ''}`}>{formatCurrency(price, settings.currency)}</span>
+            <span className={`font-body text-base font-bold ${onSale ? 'text-rose-700' : 'text-primary'}`}>{formatCurrency(price, settings.currency)}</span>
             {onSale && <span className="text-[10px] tracking-wide text-ember-light">{product.activeSale.discount}% OFF</span>}
           </div>
         </Link>
-      </div>
+      </motion.div>
 
       <QuickViewModal
         product={product}

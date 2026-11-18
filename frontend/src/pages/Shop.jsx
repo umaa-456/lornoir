@@ -34,7 +34,7 @@ function getGenderLabel(category) {
 export default function Shop() {
   const { settings } = useSiteSettings();
   const [params, setParams] = useSearchParams();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(params.get('q') || '');
   const [sort, setSort] = useState('featured');
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
